@@ -1,0 +1,42 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dependencies
+    command: npm run dev
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      FIREBASE_PROJECT_ID: demo-revoo-crm
+      FIREBASE_AUTH_EMULATOR_HOST: firebase-emulator:9099
+      FIRESTORE_EMULATOR_HOST: firebase-emulator:8080
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: demo-revoo-crm
+      NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
+      NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST: 127.0.0.1:8080
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      firebase-emulator:
+        condition: service_started
+
+  firebase-emulator:
+    build:
+      context: .
+      dockerfile: firebase/Dockerfile
+    command: firebase emulators:start --project demo-revoo-crm --only auth,firestore --import=/data --export-on-exit=/data
+    ports:
+      - "4000:4000"
+      - "8080:8080"
+      - "9099:9099"
+    volumes:
+      - emulator-data:/data
+      - ./firebase.json:/app/firebase.json:ro
+      - ./firestore.rules:/app/firestore.rules:ro
+
+volumes:
+  emulator-data:

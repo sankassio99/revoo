@@ -94,9 +94,13 @@ Represents a workspace-owned CRM contact.
 | `phone` | Required contact number for WhatsApp workflows; normalize for search. |
 | `email` | Optional email address. |
 | `notes` | Optional business notes; restricted to authorized workspace members. |
-| `communicationPreferences` | Separate permission state by communication purpose and channel. |
-| `consentEvidence` | For each recorded permission: state, purpose, channel, capture time, and source/method where available. |
+| `communicationPreferences` | Separate `unknown`, `granted`, or `denied` state for WhatsApp service messages, WhatsApp marketing, and email marketing. |
+| `consentEvidence` | Append-only evidence entries containing state, purpose, channel, capture time, source user, and capture method. |
+| `nameNormalized`, `phoneNormalized` | Derived normalized values used for workspace-scoped duplicate detection. |
+| `searchTerms` | Derived name-prefix and phone-digit-prefix terms used for workspace-scoped search. |
+| `isArchived` | Queryable active/archive marker; `false` while active and `true` when archived. |
 | `archivedAt` | Absent while active; set on archive. |
+| `lastVisitAt` | Most recent completed appointment instant; updated transactionally when an appointment is completed. |
 | `createdAt`, `updatedAt` | Server timestamps. |
 
 Possible-duplicate detection is advisory within the same workspace. It does not automatically
