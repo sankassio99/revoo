@@ -51,9 +51,10 @@ export async function listWorkspaceMembers(user: SessionUser, tenantId: string) 
     .collection(`tenants/${tenantId}/members`)
     .orderBy("createdAt", "desc")
     .get();
-  const profiles = await adminDb.getAll(
-    ...members.docs.map((member) => adminDb.doc(`users/${member.id}`)),
-  );
+  const profiles =
+    members.docs.length > 0
+      ? await adminDb.getAll(...members.docs.map((member) => adminDb.doc(`users/${member.id}`)))
+      : [];
   const profilesById = new Map(profiles.map((profile) => [profile.id, profile.data()]));
   return members.docs.map((member) => {
     const profile = profilesById.get(member.id);

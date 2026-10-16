@@ -14,7 +14,7 @@ export const PresenceDot = memo(function PresenceDot({ className = "" }: { class
       transition={
         reduceMotion
           ? undefined
-          : { type: "spring", stiffness: 100, damping: 20, duration: 2.4, repeat: Infinity }
+          : { type: "tween", ease: "easeInOut", duration: 2.4, repeat: Infinity }
       }
     />
   );

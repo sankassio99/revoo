@@ -21,3 +21,5 @@ Thumbs.db
 *.swp
 .vscode/
 .idea/
+firebase.config.js
+firebase-auth/*

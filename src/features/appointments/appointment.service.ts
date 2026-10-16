@@ -395,11 +395,14 @@ export async function listAppointments(
     .get();
 
   const customerIds = [...new Set(appointments.docs.map((appointment) => appointment.get("customerId") as string))];
-  const customers = await adminDb.getAll(
-    ...customerIds.map((customerId) =>
-      adminDb.doc(`tenants/${tenantId}/customers/${customerId}`),
-    ),
-  );
+  const customers =
+    customerIds.length > 0
+      ? await adminDb.getAll(
+          ...customerIds.map((customerId) =>
+            adminDb.doc(`tenants/${tenantId}/customers/${customerId}`),
+          ),
+        )
+      : [];
   const customerNames = new Map(customers.map((customer) => [customer.id, customer.get("name")]));
 
   return appointments.docs.map((appointment) => {

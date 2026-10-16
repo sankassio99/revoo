@@ -71,6 +71,7 @@ export async function POST(request: Request) {
         typeof error.code === "string"
           ? error.code
           : undefined,
+      message: error instanceof Error ? error.message : undefined,
     });
     return NextResponse.json(
       { error: "We could not verify your sign-in. Please try again." },
