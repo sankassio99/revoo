@@ -2,56 +2,138 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
+import { useState } from "react";
 import {
-  CalendarDots,
-  ChartLineUp,
-  GearSix,
-  House,
-  UsersThree,
+  CaretDown,
 } from "@phosphor-icons/react";
-
-const items = [
-  { href: "/workspace", label: "Overview", icon: House, exact: true },
-  { href: "/workspace/appointments", label: "Appointments", icon: CalendarDots },
-  { href: "/workspace/customers", label: "Customers", icon: UsersThree },
-  { href: "/workspace/settings", label: "Business settings", icon: GearSix },
-  { href: "/workspace/reports", label: "Reports", icon: ChartLineUp },
-];
+import {
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  useSidebar,
+} from "@/components/ui/sidebar";
+import {
+  navigationItems,
+  type NavigationDestination,
+} from "@/features/navigation/navigation-items";
+import { resolveNavigation } from "@/features/navigation/navigation-match";
 
 export function SidebarNav() {
   const pathname = usePathname();
+  const match = resolveNavigation(pathname);
+  const { isMobile, setOpenMobile } = useSidebar();
+  const [collapsedSettingsPath, setCollapsedSettingsPath] = useState<string | null>(null);
+  const [settingsManuallyExpanded, setSettingsManuallyExpanded] = useState(false);
+  const settingsExpanded = match.activeGroup
+    ? collapsedSettingsPath !== pathname
+    : settingsManuallyExpanded;
+
+  function toggleSettings() {
+    if (settingsExpanded) {
+      setCollapsedSettingsPath(match.activeGroup ? pathname : null);
+      setSettingsManuallyExpanded(false);
+    } else {
+      setCollapsedSettingsPath(null);
+      setSettingsManuallyExpanded(true);
+    }
+  }
+
+  function closeMobileNavigation() {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  }
+
+  function renderDestination(item: NavigationDestination, nested = false) {
+    const Icon = item.icon;
+    const active = match.activeHref === item.href;
+
+    if (nested) {
+      return (
+        <SidebarMenuSubButton
+          aria-current={active ? "page" : undefined}
+          isActive={active}
+          key={item.href}
+          onClick={closeMobileNavigation}
+          render={<Link href={item.href} />}
+        >
+          <Icon aria-hidden="true" size={18} weight={active ? "fill" : "regular"} />
+          <span>{item.label}</span>
+        </SidebarMenuSubButton>
+      );
+    }
+
+    return (
+      <SidebarMenuButton
+        aria-current={active ? "page" : undefined}
+        isActive={active}
+        key={item.href}
+        onClick={closeMobileNavigation}
+        render={<Link href={item.href} />}
+      >
+        <Icon aria-hidden="true" size={18} weight={active ? "fill" : "regular"} />
+        <span>{item.label}</span>
+      </SidebarMenuButton>
+    );
+  }
 
   return (
-    <nav aria-label="Workspace navigation" className="space-y-1">
-      {items.map((item) => {
-        const active = item.exact
-          ? pathname === item.href
-          : pathname === item.href || pathname.startsWith(`${item.href}/`);
-        const Icon = item.icon;
+    <nav aria-label="Workspace navigation">
+      <SidebarGroup>
+        <SidebarGroupLabel className="px-3 text-[9px] font-semibold uppercase tracking-[0.2em] text-white/45">
+          Workspace
+        </SidebarGroupLabel>
+        <SidebarMenu>
+          {navigationItems.map((item) => {
+            if (item.type === "link") {
+              return (
+                <SidebarMenuItem key={item.href}>
+                  {renderDestination(item)}
+                </SidebarMenuItem>
+              );
+            }
 
-        return (
-          <Link
-            aria-current={active ? "page" : undefined}
-            className={`relative flex min-h-11 items-center gap-3 rounded-xl px-3.5 text-[13px] transition-colors duration-200 ${
-              active ? "text-white" : "text-white/60 hover:bg-white/6 hover:text-white/90"
-            }`}
-            href={item.href}
-            key={item.href}
-          >
-            {active && (
-              <motion.span
-                className="absolute inset-0 rounded-xl bg-white/10"
-                initial={false}
-                layoutId="active-navigation-item"
-                transition={{ type: "spring", stiffness: 100, damping: 20 }}
-              />
-            )}
-            <Icon className="relative z-[1]" size={18} weight={active ? "fill" : "regular"} />
-            <span className="relative z-[1]">{item.label}</span>
-          </Link>
-        );
-      })}
+            const Icon = item.icon;
+            const active = match.activeGroup === item.id;
+
+            return (
+              <SidebarMenuItem key={item.id}>
+                <SidebarMenuButton
+                  aria-controls="settings-navigation"
+                  aria-expanded={settingsExpanded}
+                  aria-label={item.label}
+                  isActive={active}
+                  onClick={toggleSettings}
+                >
+                  <Icon aria-hidden="true" size={18} weight={active ? "fill" : "regular"} />
+                  <span>{item.label}</span>
+                  <CaretDown
+                    aria-hidden="true"
+                    className={`ml-auto transition-transform ${settingsExpanded ? "rotate-180" : ""}`}
+                    size={14}
+                  />
+                </SidebarMenuButton>
+                <SidebarMenuSub
+                  id="settings-navigation"
+                  hidden={!settingsExpanded}
+                  aria-label="Settings pages"
+                >
+                  {item.items.map((child) => (
+                    <SidebarMenuSubItem key={child.href}>
+                      {renderDestination(child, true)}
+                    </SidebarMenuSubItem>
+                  ))}
+                </SidebarMenuSub>
+              </SidebarMenuItem>
+            );
+          })}
+        </SidebarMenu>
+      </SidebarGroup>
     </nav>
   );
 }

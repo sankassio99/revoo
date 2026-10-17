@@ -7,6 +7,14 @@ import { SignOutButton } from "@/features/auth/sign-out-button";
 import type { WorkspaceRole } from "@/lib/auth/authorization";
 import { MagneticLink } from "@/features/navigation/magnetic-link";
 import { MobileNav } from "@/features/navigation/mobile-nav";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarInset,
+  SidebarProvider,
+} from "@/components/ui/sidebar";
 
 export type WorkspaceSummary = {
   tenantId: string;
@@ -32,33 +40,35 @@ export function AppFrame({
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
     .join("");
+  const sidebarStyle: React.CSSProperties & { "--sidebar-width": string } = {
+    "--sidebar-width": "248px",
+  };
 
   return (
-    <div className="min-h-[100dvh] bg-paper">
-      <aside className="fixed inset-y-0 left-0 z-[2] hidden w-[248px] flex-col bg-forest px-4 py-5 lg:flex">
-        <Link className="flex items-center gap-3 px-3 pb-8 pt-1" href="/" aria-label="Revoo home">
-          <span className="grid size-9 place-items-center rounded-full border border-white/15 bg-white/10 text-white">
-            <Sparkle size={16} weight="fill" />
-          </span>
-          <span className="text-[19px] font-semibold tracking-[-0.06em] text-white">revoo</span>
-        </Link>
+    <SidebarProvider className="min-h-[100dvh] bg-paper" style={sidebarStyle}>
+      <Sidebar className="border-r-0 bg-forest">
+        <SidebarHeader className="px-4 pb-3 pt-5">
+          <Link className="flex items-center gap-3 px-2 pb-5 pt-1" href="/" aria-label="Revoo home">
+            <span className="grid size-9 place-items-center rounded-full border border-white/15 bg-white/10 text-white">
+              <Sparkle size={16} weight="fill" />
+            </span>
+            <span className="text-[19px] font-semibold tracking-[-0.06em] text-white">revoo</span>
+          </Link>
 
-        <div className="mb-7">
           <WorkspaceSwitcher activeTenantId={activeTenantId} workspaces={workspaces} />
           {workspaces.length > 0 && (
-            <div className="mt-2 px-3">
+            <div className="mt-2 px-2">
               <CreateWorkspaceButton />
             </div>
           )}
-        </div>
+        </SidebarHeader>
 
-        <p className="mb-3 px-3 text-[9px] font-semibold uppercase tracking-[0.2em] text-white/35">
-          Workspace
-        </p>
-        <SidebarNav />
+        <SidebarContent>
+          <SidebarNav />
+        </SidebarContent>
 
-        <div className="mt-auto border-t border-white/12 pt-4">
-          <div className="mb-3 flex items-center gap-3 px-2 py-2">
+        <SidebarFooter className="border-t border-white/12 px-4 pb-4 pt-3">
+          <div className="flex items-center gap-3 px-2 py-2">
             <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#d7b49d] text-xs font-semibold text-forest">
               {initials || "R"}
             </span>
@@ -72,13 +82,14 @@ export function AppFrame({
             </span>
           </div>
           <SignOutButton />
-        </div>
-      </aside>
+        </SidebarFooter>
+      </Sidebar>
 
-      <div className="min-h-[100dvh] lg:pl-[248px]">
+      <SidebarInset className="min-h-[100dvh] bg-paper">
         <header className="sticky top-0 z-[1] border-b border-line/80 bg-paper/90 px-4 py-3 backdrop-blur-xl sm:px-7 lg:px-10">
           <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-3 lg:hidden">
+            <div className="flex min-w-0 items-center gap-2 md:hidden">
+              <MobileNav />
               <span className="grid size-8 shrink-0 place-items-center rounded-full bg-forest text-white">
                 <Sparkle size={14} weight="fill" />
               </span>
@@ -86,14 +97,14 @@ export function AppFrame({
                 {active?.name ?? "Your workspace"}
               </span>
             </div>
-            <div className="hidden text-xs text-muted lg:block">
+            <div className="hidden text-xs text-muted md:block">
               {active?.name ?? "Your workspace"}
               <span className="mx-2 text-line">/</span>
               {active?.role === "owner" ? "Owner workspace" : "Studio"}
             </div>
             <div className="flex items-center gap-2">
               {workspaces.length > 0 && (
-                <div className="lg:hidden">
+                <div className="md:hidden">
                   <WorkspaceSwitcher activeTenantId={activeTenantId} workspaces={workspaces} />
                 </div>
               )}
@@ -109,12 +120,10 @@ export function AppFrame({
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1440px] px-4 pb-24 pt-7 sm:px-7 sm:pt-9 lg:px-10 lg:pb-10">
+        <div className="mx-auto w-full max-w-[1440px] px-4 pb-10 pt-7 sm:px-7 sm:pt-9 lg:px-10">
           {children}
-        </main>
-      </div>
-
-      <MobileNav />
-    </div>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

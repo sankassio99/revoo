@@ -4,7 +4,15 @@
 
 - Node.js version supported by the repository (`>=22 <25`).
 - Project dependencies installed.
-- For authenticated browser checks, the repository's documented Firebase Emulator Suite and test workspace setup.
+- Java installed for the Firebase Emulator Suite.
+
+## Start the local Firebase emulators
+
+In a separate terminal, start Auth and Firestore emulators:
+
+```powershell
+npx firebase emulators:start --project demo-revoo-crm --only auth,firestore
+```
 
 ## Validate
 

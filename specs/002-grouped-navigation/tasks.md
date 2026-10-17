@@ -12,7 +12,7 @@
 
 **Purpose**: Install the shadcn navigation primitive selected in research.
 
-- [ ] T001 Add the configured shadcn Sidebar component with `npx shadcn@latest add sidebar` and verify its generated source at `src/components/ui/sidebar.tsx`.
+- [X] T001 Add the configured shadcn Sidebar component with `npx shadcn@latest add sidebar` and verify its generated source at `src/components/ui/sidebar.tsx`.
 
 ## Phase 2: Foundational
 
