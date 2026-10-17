@@ -9,11 +9,11 @@
   --paper: #f4f5f0;
   --paper-deep: #e9ece5;
   --ink: #18231f;
-  --muted: oklch(0.97 0 0);
+  --muted: #737b74;
   --line: #dfe4dc;
   --forest: #183b31;
   --forest-soft: #e5eee7;
-  --accent: oklch(0.97 0 0);
+  --accent: #bd704f;
   --accent-soft: #f3e8e1;
   --font-ui: "Geist", "Aptos", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
   --background: oklch(1 0 0);
