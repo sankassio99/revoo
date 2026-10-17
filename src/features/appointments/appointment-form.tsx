@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -40,7 +41,6 @@ export function AppointmentForm({
   const [serviceIds, setServiceIds] = useState<string[]>([]);
   const [professionalId, setProfessionalId] = useState("");
   const [localStart, setLocalStart] = useState(defaultLocalStart);
-  const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const eligibleProfessionals = professionals.filter((professional) =>
     serviceIds.every((id) => professional.serviceIds.includes(id)),
@@ -64,7 +64,6 @@ export function AppointmentForm({
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!canSubmit) return;
-    setError("");
     setBusy(true);
     try {
       const response = await fetch(`/api/workspaces/${tenantId}/appointments`, {
@@ -79,9 +78,14 @@ export function AppointmentForm({
       });
       const result = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(translate(locale, result.error ?? "Appointment could not be booked."));
+      toast.success(translate(locale, "Appointment booked."));
+      setCustomerId("");
+      setServiceIds([]);
+      setProfessionalId("");
+      setLocalStart(defaultLocalStart);
       router.refresh();
     } catch (submitError) {
-      setError(submitError instanceof Error ? translate(locale, submitError.message) : translate(locale, "Appointment could not be booked."));
+      toast.error(submitError instanceof Error ? translate(locale, submitError.message) : translate(locale, "Appointment could not be booked."));
     } finally {
       setBusy(false);
     }
@@ -161,7 +165,6 @@ export function AppointmentForm({
               {translate(locale, "Add an active customer, service, and eligible professional before booking.")}
             </p>
           )}
-          {error && <p aria-live="assertive" className="text-xs text-red-700">{error}</p>}
         </div>
       </form>
     </details>

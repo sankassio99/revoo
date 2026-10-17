@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
+import { Toaster } from "@/components/ui/sonner";
 import { LanguageProvider } from "@/features/i18n/language-provider";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/messages";
@@ -36,6 +37,7 @@ export default async function RootLayout({
     <html lang={locale} className={cn("font-sans", geist.variable)}>
       <body>
         <LanguageProvider initialLocale={locale}>{children}</LanguageProvider>
+        <Toaster position="top-right" richColors />
       </body>
     </html>
   );
