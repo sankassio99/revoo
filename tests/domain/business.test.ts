@@ -28,7 +28,7 @@ describe("appointment validation", () => {
     expect(
       appointmentInputSchema.safeParse({
         customerId: "customer",
-        serviceId: "service",
+        serviceIds: ["service"],
         professionalId: "professional",
         localStart: "2026-01-05T09:30",
       }).success,

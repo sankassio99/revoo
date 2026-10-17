@@ -84,12 +84,16 @@ async function readBookingRecords(
   transaction: Transaction,
   tenantId: string,
   customerId: string,
-  serviceId: string,
+  serviceIds: string[],
   professionalId: string,
 ) {
-  const [customer, service, professional, settings] = await Promise.all([
+  const [customer, services, professional, settings] = await Promise.all([
     transaction.get(adminDb.doc(`tenants/${tenantId}/customers/${customerId}`)),
-    transaction.get(adminDb.doc(`tenants/${tenantId}/services/${serviceId}`)),
+    Promise.all(
+      serviceIds.map((serviceId) =>
+        transaction.get(adminDb.doc(`tenants/${tenantId}/services/${serviceId}`)),
+      ),
+    ),
     transaction.get(adminDb.doc(`tenants/${tenantId}/professionals/${professionalId}`)),
     transaction.get(adminDb.doc(`tenants/${tenantId}/settings/general`)),
   ]);
@@ -100,17 +104,17 @@ async function readBookingRecords(
   ) {
     throw new Error("Choose an active customer in this workspace.");
   }
-  if (!service.exists || service.get("status") !== "active") {
+  if (services.some((service) => !service.exists || service.get("status") !== "active")) {
     throw new Error("Choose an active service in this workspace.");
   }
   if (!professional.exists || professional.get("status") !== "active") {
     throw new Error("Choose an active professional in this workspace.");
   }
-  const serviceIds: unknown = professional.get("serviceIds");
-  if (!Array.isArray(serviceIds) || !serviceIds.includes(serviceId)) {
+  const assigned: unknown = professional.get("serviceIds");
+  if (!Array.isArray(assigned) || !serviceIds.every((id) => assigned.includes(id))) {
     throw new Error("This professional is not assigned to the selected service.");
   }
-  return { customer, service, professional, settings };
+  return { customer, services, professional, settings };
 }
 
 function historyEntry(user: SessionUser, changedFields: string[], before: unknown, after: unknown) {
@@ -137,21 +141,24 @@ export async function createAppointment(
   const appointmentRef = adminDb
     .collection(`tenants/${tenantId}/appointments`)
     .doc();
+  const serviceIds = [...new Set(parsed.data.serviceIds)];
   const interval = await adminDb.runTransaction(async (transaction) => {
     const records = await readBookingRecords(
       transaction,
       tenantId,
       parsed.data.customerId,
-      parsed.data.serviceId,
+      serviceIds,
       parsed.data.professionalId,
     );
-    const durationMinutes = records.service.get("durationMinutes");
-    const priceMinorUnits = records.service.get("priceMinorUnits");
+    const durations: unknown[] = records.services.map((s) => s.get("durationMinutes"));
+    const prices: unknown[] = records.services.map((s) => s.get("priceMinorUnits"));
+    const durationMinutes = durations.reduce<number>((sum, d) => sum + (d as number), 0);
+    const priceMinorUnits = prices.reduce<number>((sum, p) => sum + (p as number), 0);
     if (
+      !durations.every((d) => Number.isSafeInteger(d) && (d as number) > 0) ||
+      !prices.every((p) => Number.isSafeInteger(p) && (p as number) >= 0) ||
       !Number.isSafeInteger(durationMinutes) ||
-      durationMinutes <= 0 ||
-      !Number.isSafeInteger(priceMinorUnits) ||
-      priceMinorUnits < 0
+      !Number.isSafeInteger(priceMinorUnits)
     ) {
       throw new Error("The selected service has invalid booking details.");
     }
@@ -178,13 +185,14 @@ export async function createAppointment(
 
     transaction.create(appointmentRef, {
       customerId: parsed.data.customerId,
-      serviceId: parsed.data.serviceId,
+      serviceId: serviceIds[0],
+      serviceIds,
       professionalId: parsed.data.professionalId,
       startAtUtc: Timestamp.fromDate(slot.startAt),
       endAtUtc: Timestamp.fromDate(slot.endAt),
       timeZoneAtBooking: timeZone,
       serviceSnapshot: {
-        name: records.service.get("name"),
+        name: records.services.map((s) => s.get("name")).join(", "),
         durationMinutes,
         priceMinorUnits,
       },

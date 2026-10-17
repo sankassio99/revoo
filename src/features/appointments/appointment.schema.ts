@@ -12,7 +12,7 @@ export const appointmentStatusSchema = z.enum([
 
 export const appointmentInputSchema = z.object({
   customerId: recordIdSchema,
-  serviceId: recordIdSchema,
+  serviceIds: z.array(recordIdSchema).min(1).max(20),
   professionalId: recordIdSchema,
   localStart: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
 });

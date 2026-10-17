@@ -73,7 +73,7 @@ describe("appointment schedule guard", () => {
   function booking(localStart: string) {
     return createAppointment(user, tenantId, {
       customerId: "customer-test",
-      serviceId: "service-test",
+      serviceIds: ["service-test"],
       professionalId: "professional-test",
       localStart,
     });
