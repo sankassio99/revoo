@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { MoreHorizontalIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -43,6 +44,8 @@ export type CalendarAppointment = {
 };
 
 type UpdatePayload = Record<string, unknown>;
+
+const ALL_PROFESSIONALS = "__all__";
 
 function AppointmentActions({
   appointment,
@@ -176,6 +179,16 @@ export function AppointmentCalendar({
   const router = useRouter();
   const { locale } = useLanguage();
   const [busy, setBusy] = useState(false);
+  const [professional, setProfessional] = useState(ALL_PROFESSIONALS);
+
+  const professionals = useMemo(
+    () => [...new Set(appointments.map((a) => a.professionalName))].sort((a, b) => a.localeCompare(b)),
+    [appointments],
+  );
+  const visibleAppointments = useMemo(
+    () => (professional === ALL_PROFESSIONALS ? appointments : appointments.filter((a) => a.professionalName === professional)),
+    [appointments, professional],
+  );
 
   async function update(appointmentId: string, payload: UpdatePayload) {
     setBusy(true);
@@ -208,11 +221,29 @@ export function AppointmentCalendar({
   }
 
   const groups = view === "week"
-    ? Map.groupBy(appointments, (appointment) => appointment.localDate)
-    : new Map([["", appointments]]);
+    ? Map.groupBy(visibleAppointments, (appointment) => appointment.localDate)
+    : new Map([["", visibleAppointments]]);
 
   return (
     <div>
+      {professionals.length > 1 && (
+        <div className="mb-4 flex items-center gap-2">
+          <Label htmlFor="professional-filter">{translate(locale, "Professional")}</Label>
+          <Select onValueChange={(value) => setProfessional(value ?? ALL_PROFESSIONALS)} value={professional}>
+            <SelectTrigger className="w-52" id="professional-filter">
+              <SelectValue>
+                {professional === ALL_PROFESSIONALS ? translate(locale, "All professionals") : professional}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_PROFESSIONALS}>{translate(locale, "All professionals")}</SelectItem>
+              {professionals.map((name) => (
+                <SelectItem key={name} value={name}>{name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
       {[...groups.entries()].map(([date, items]) => (
         <section aria-label={date || translate(locale, "Daily appointments")} className="mb-8 last:mb-0" key={date || "day"}>
           {date && (
