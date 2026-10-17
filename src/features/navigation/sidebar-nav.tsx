@@ -62,6 +62,7 @@ export function SidebarNav() {
           aria-current={active ? "page" : undefined}
           isActive={active}
           key={item.href}
+          className="text-white"
           onClick={closeMobileNavigation}
           render={<Link href={item.href} />}
         >
@@ -95,7 +96,7 @@ export function SidebarNav() {
           {navigationItems.map((item) => {
             if (item.type === "link") {
               return (
-                <SidebarMenuItem key={item.href}>
+                <SidebarMenuItem key={item.href} className="text-white">
                   {renderDestination(item)}
                 </SidebarMenuItem>
               );
@@ -111,6 +112,7 @@ export function SidebarNav() {
                   aria-expanded={settingsExpanded}
                   aria-label={translate(locale, item.label)}
                   isActive={active}
+                  className="text-white"
                   onClick={toggleSettings}
                 >
                   <Icon aria-hidden="true" size={18} weight={active ? "fill" : "regular"} />
@@ -127,7 +129,7 @@ export function SidebarNav() {
                   aria-label={translate(locale, "Settings pages")}
                 >
                   {item.items.map((child) => (
-                    <SidebarMenuSubItem key={child.href}>
+                    <SidebarMenuSubItem key={child.href} >
                       {renderDestination(child, true)}
                     </SidebarMenuSubItem>
                   ))}
