@@ -1,7 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { MoreHorizontalIcon } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { useLanguage } from "@/features/i18n/language-provider";
 import { translate } from "@/lib/i18n/messages";
 
@@ -21,13 +42,125 @@ export type CalendarAppointment = {
   priceMinorUnits: number;
 };
 
-const transitions: Record<CalendarAppointment["status"], CalendarAppointment["status"][]> = {
-  Scheduled: ["Confirmed", "Cancelled", "NoShow"],
-  Confirmed: ["Completed", "Cancelled", "NoShow"],
-  Completed: [],
-  Cancelled: [],
-  NoShow: [],
-};
+type UpdatePayload = Record<string, unknown>;
+
+function AppointmentActions({
+  appointment,
+  currency,
+  disabled,
+  onUpdate,
+}: {
+  appointment: CalendarAppointment;
+  currency: string;
+  disabled: boolean;
+  onUpdate: (appointmentId: string, payload: UpdatePayload) => Promise<boolean>;
+}) {
+  const { locale } = useLanguage();
+  const t = (text: string) => translate(locale, text);
+  const [completeOpen, setCompleteOpen] = useState(false);
+  const [rescheduleOpen, setRescheduleOpen] = useState(false);
+  const { status } = appointment;
+  const isOpen = status === "Scheduled" || status === "Confirmed";
+
+  if (!isOpen) return null;
+
+  async function complete(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const amount = String(new FormData(event.currentTarget).get("amountCharged") ?? "").trim();
+    const payload: UpdatePayload = { action: "status", status: "Completed" };
+    if (amount) payload.amountChargedMinorUnits = Math.round(Number(amount) * 100);
+    if (await onUpdate(appointment.id, payload)) setCompleteOpen(false);
+  }
+
+  async function reschedule(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const localStart = new FormData(event.currentTarget).get("localStart");
+    if (await onUpdate(appointment.id, { action: "reschedule", localStart })) {
+      setRescheduleOpen(false);
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-2 sm:justify-end">
+      {status === "Scheduled" && (
+        <Button
+          disabled={disabled}
+          onClick={() => void onUpdate(appointment.id, { action: "status", status: "Confirmed" })}
+          size="sm"
+          variant="outline"
+        >
+          {t("Confirm")}
+        </Button>
+      )}
+      {status === "Confirmed" && (
+        <Popover onOpenChange={setCompleteOpen} open={completeOpen}>
+          <PopoverTrigger render={<Button disabled={disabled} size="sm" />}>{t("Complete")}</PopoverTrigger>
+          <PopoverContent align="end" className="w-60">
+            <form className="grid gap-3" onSubmit={complete}>
+              <div className="grid gap-1.5">
+                <Label htmlFor={`amount-${appointment.id}`}>
+                  {t("Amount charged")} ({currency})
+                </Label>
+                <Input
+                  defaultValue={(appointment.amountChargedMinorUnits ?? appointment.priceMinorUnits) / 100}
+                  id={`amount-${appointment.id}`}
+                  min={0}
+                  name="amountCharged"
+                  step="0.01"
+                  type="number"
+                />
+              </div>
+              <Button disabled={disabled} type="submit">{t("Save completion")}</Button>
+            </form>
+          </PopoverContent>
+        </Popover>
+      )}
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={<Button aria-label={t("More actions")} disabled={disabled} size="icon-sm" variant="ghost" />}
+        >
+          <MoreHorizontalIcon />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setRescheduleOpen(true)}>{t("Reschedule")}</DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => void onUpdate(appointment.id, { action: "status", status: "NoShow" })}>
+            {t("Mark no-show")}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => void onUpdate(appointment.id, { action: "status", status: "Cancelled" })}
+            variant="destructive"
+          >
+            {t("Cancel")}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <Sheet onOpenChange={setRescheduleOpen} open={rescheduleOpen}>
+        <SheetContent>
+          <form className="flex h-full flex-col" onSubmit={reschedule}>
+            <SheetHeader>
+              <SheetTitle>{t("Reschedule")}</SheetTitle>
+              <SheetDescription>{appointment.customerName}</SheetDescription>
+            </SheetHeader>
+            <div className="grid gap-1.5 px-4">
+              <Label htmlFor={`start-${appointment.id}`}>{t("New date and time")}</Label>
+              <Input
+                defaultValue={appointment.localStart}
+                id={`start-${appointment.id}`}
+                name="localStart"
+                required
+                type="datetime-local"
+              />
+            </div>
+            <SheetFooter>
+              <Button disabled={disabled} type="submit">{t("Save new time")}</Button>
+            </SheetFooter>
+          </form>
+        </SheetContent>
+      </Sheet>
+    </div>
+  );
+}
 
 export function AppointmentCalendar({
   tenantId,
@@ -42,14 +175,10 @@ export function AppointmentCalendar({
 }) {
   const router = useRouter();
   const { locale } = useLanguage();
-  const [busyId, setBusyId] = useState("");
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  async function update(payload: Record<string, unknown>, appointmentId: string) {
-    setBusyId(appointmentId);
-    setError("");
-    setMessage("");
+  async function update(appointmentId: string, payload: UpdatePayload) {
+    setBusy(true);
     try {
       const response = await fetch(`/api/workspaces/${tenantId}/appointments`, {
         method: "PATCH",
@@ -57,13 +186,15 @@ export function AppointmentCalendar({
         body: JSON.stringify({ appointmentId, ...payload }),
       });
       const result = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(translate(locale, result.error ?? "Appointment could not be updated."));
-      setMessage(translate(locale, "Appointment updated."));
+      if (!response.ok) throw new Error(result.error ?? "Appointment could not be updated.");
+      toast.success(translate(locale, "Appointment updated."));
       router.refresh();
+      return true;
     } catch (updateError) {
-      setError(updateError instanceof Error ? translate(locale, updateError.message) : translate(locale, "Appointment could not be updated."));
+      toast.error(translate(locale, updateError instanceof Error ? updateError.message : "Appointment could not be updated."));
+      return false;
     } finally {
-      setBusyId("");
+      setBusy(false);
     }
   }
 
@@ -104,76 +235,17 @@ export function AppointmentCalendar({
                     {translate(locale, appointment.status)}
                   </span>
                 </div>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:justify-end">
-                  {transitions[appointment.status].map((status) => status === "Completed" ? (
-                    <details className="relative" key={status}>
-                      <summary className="cursor-pointer text-[11px] font-medium text-forest hover:underline">{translate(locale, "Complete")}</summary>
-                      <form
-                        className="absolute right-0 top-7 z-[1] grid w-56 gap-3 rounded-xl border border-line bg-white p-3 shadow-lg"
-                        onSubmit={(event) => {
-                          event.preventDefault();
-                          const fields = new FormData(event.currentTarget);
-                          const amount = fields.get("amountCharged");
-                          const amountChargedMinorUnits = typeof amount === "string" && amount.trim()
-                            ? Math.round(Number(amount) * 100)
-                            : undefined;
-                          void update(
-                            { action: "status", status, ...(amountChargedMinorUnits !== undefined ? { amountChargedMinorUnits } : {}) },
-                            appointment.id,
-                          );
-                        }}
-                      >
-                        <label className="grid gap-1 text-[10px] font-medium text-muted">
-                          {translate(locale, "Amount charged")} ({currency})
-                          <input className="min-h-9 rounded-lg border border-line px-2 text-xs text-ink" defaultValue={(appointment.amountChargedMinorUnits ?? appointment.priceMinorUnits) / 100} min={0} name="amountCharged" step="0.01" type="number" />
-                        </label>
-                        <button className="min-h-9 rounded-full bg-forest text-xs font-medium text-white disabled:opacity-60" disabled={busyId === appointment.id} type="submit">{translate(locale, "Save completion")}</button>
-                      </form>
-                    </details>
-                  ) : (
-                    <button
-                      className={`text-[11px] font-medium transition hover:underline disabled:opacity-50 ${status === "Cancelled" ? "text-muted" : "text-forest"}`}
-                      disabled={Boolean(busyId)}
-                      key={status}
-                      onClick={() => void update({ action: "status", status }, appointment.id)}
-                      type="button"
-                    >
-                      {translate(locale, status === "NoShow" ? "Mark no-show" : status === "Cancelled" ? "Cancel" : status)}
-                    </button>
-                  ))}
-                  {(appointment.status === "Scheduled" || appointment.status === "Confirmed") && (
-                    <details className="relative">
-                      <summary className="cursor-pointer text-[11px] font-medium text-forest hover:underline">{translate(locale, "Reschedule")}</summary>
-                      <form
-                        className="absolute right-0 top-7 z-[1] grid w-60 gap-3 rounded-xl border border-line bg-white p-3 shadow-lg"
-                        onSubmit={(event) => {
-                          event.preventDefault();
-                          const form = new FormData(event.currentTarget);
-                          void update(
-                            { action: "reschedule", localStart: form.get("localStart") },
-                            appointment.id,
-                          );
-                        }}
-                      >
-                        <label className="grid gap-1 text-[10px] font-medium text-muted">
-                          {translate(locale, "New date and time")}
-                          <input className="min-h-9 rounded-lg border border-line px-2 text-xs text-ink" defaultValue={appointment.localStart} name="localStart" required type="datetime-local" />
-                        </label>
-                        <button className="min-h-9 rounded-full bg-forest text-xs font-medium text-white disabled:opacity-60" disabled={busyId === appointment.id} type="submit">{translate(locale, "Save new time")}</button>
-                      </form>
-                    </details>
-                  )}
-                </div>
+                <AppointmentActions
+                  appointment={appointment}
+                  currency={currency}
+                  disabled={busy}
+                  onUpdate={update}
+                />
               </article>
             ))}
           </div>
         </section>
       ))}
-      {(error || message) && (
-        <p aria-live={error ? "assertive" : "polite"} className={`py-3 text-xs ${error ? "text-red-700" : "text-forest"}`}>
-          {error || message}
-        </p>
-      )}
     </div>
   );
 }
