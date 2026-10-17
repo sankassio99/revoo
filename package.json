@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "next dev --hostname 0.0.0.0",
-    "build": "next build",
+    "build": "npm run setup:firebase && next build",
     "start": "next start --hostname 0.0.0.0",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
@@ -18,7 +18,8 @@
     "test:performance": "vitest run tests/performance",
     "test:recovery": "node scripts/verify-recovery.mjs",
     "emulators": "firebase emulators:start --project demo-revoo-crm --only auth,firestore",
-    "check": "npm run typecheck && npm run lint && npm run test:unit"
+    "check": "npm run typecheck && npm run lint && npm run test:unit",
+    "setup:firebase": "node scripts/setup-firebase.js"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
