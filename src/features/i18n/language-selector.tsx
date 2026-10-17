@@ -2,6 +2,15 @@
 
 import { useLanguage } from "@/features/i18n/language-provider";
 import { isLocale } from "@/lib/i18n/locale";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDownIcon } from "lucide-react";
 
 export function LanguageSelector({
   className,
@@ -9,22 +18,44 @@ export function LanguageSelector({
   className?: string;
 }) {
   const { locale, messages, setLocale } = useLanguage();
+  const currentLanguage =
+    locale === "pt"
+      ? { flag: "🇧🇷", label: messages.language.portuguese }
+      : { flag: "🇺🇸", label: messages.language.english };
 
   return (
-    <label className={className}>
-      <span className="sr-only">{messages.language.label}</span>
-      <select
-        aria-label={messages.language.label}
-        className="min-h-10 rounded-full border border-line bg-white/70 px-3 text-sm font-medium text-ink outline-none transition-colors hover:border-forest/30 focus-visible:ring-2 focus-visible:ring-forest"
-        onChange={(event) => {
-          const selectedLocale = event.target.value;
-          if (isLocale(selectedLocale)) setLocale(selectedLocale);
-        }}
-        value={locale}
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            aria-label={messages.language.label}
+            className={className}
+            size="default"
+            variant="outline"
+          />
+        }
       >
-        <option value="en">{messages.language.english}</option>
-        <option value="pt">{messages.language.portuguese}</option>
-      </select>
-    </label>
+        <span aria-hidden="true">{currentLanguage.flag}</span>
+        {currentLanguage.label}
+        <ChevronDownIcon aria-hidden="true" data-icon="inline-end" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-44">
+        <DropdownMenuRadioGroup
+          onValueChange={(value) => {
+            if (isLocale(value)) setLocale(value);
+          }}
+          value={locale}
+        >
+          <DropdownMenuRadioItem className="min-h-10 gap-2 px-2" value="en">
+            <span aria-hidden="true">🇺🇸</span>
+            {messages.language.english}
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem className="min-h-10 gap-2 px-2" value="pt">
+            <span aria-hidden="true">🇧🇷</span>
+            {messages.language.portuguese}
+          </DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
