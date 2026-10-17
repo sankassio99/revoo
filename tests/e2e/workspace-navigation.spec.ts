@@ -5,7 +5,7 @@ const authEmulatorHost =
   process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
 const firestoreEmulatorHost =
   process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
-const apiKey = process.env.FIREBASE_API_KEY ?? "demo-api-key";
+const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? "demo-api-key";
 
 test.beforeEach(async ({ page }) => {
   try {
