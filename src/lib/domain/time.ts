@@ -133,19 +133,20 @@ export function getLocalDayBounds(now: Date, timeZone: string) {
   };
 }
 
-export function formatLocalTime(date: Date, timeZone: string) {
-  return new Intl.DateTimeFormat("en", {
+export function formatLocalTime(date: Date, timeZone: string, locale: Locale = "en") {
+  return new Intl.DateTimeFormat(locale, {
     timeZone,
     hour: "numeric",
     minute: "2-digit",
   }).format(date);
 }
 
-export function formatLocalDate(date: Date, timeZone: string) {
-  return new Intl.DateTimeFormat("en", {
+export function formatLocalDate(date: Date, timeZone: string, locale: Locale = "en") {
+  return new Intl.DateTimeFormat(locale, {
     timeZone,
     weekday: "long",
     month: "long",
     day: "numeric",
   }).format(date);
 }
+import type { Locale } from "@/lib/i18n/locale";

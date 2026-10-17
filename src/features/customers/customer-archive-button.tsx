@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLanguage } from "@/features/i18n/language-provider";
+import { translate } from "@/lib/i18n/messages";
 
 export function CustomerArchiveButton({
   tenantId,
@@ -11,11 +13,12 @@ export function CustomerArchiveButton({
   customerId: string;
 }) {
   const router = useRouter();
+  const { locale } = useLanguage();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
   async function archive() {
-    if (!window.confirm("Archive this customer? Their appointment history will remain available.")) {
+    if (!window.confirm(translate(locale, "Archive this customer? Their appointment history will remain available."))) {
       return;
     }
     setBusy(true);
@@ -30,11 +33,11 @@ export function CustomerArchiveButton({
         },
       );
       const result = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(result.error ?? "Customer could not be archived.");
+      if (!response.ok) throw new Error(translate(locale, result.error ?? "Customer could not be archived."));
       router.replace("/workspace/customers");
       router.refresh();
     } catch (archiveError) {
-      setError(archiveError instanceof Error ? archiveError.message : "Customer could not be archived.");
+      setError(archiveError instanceof Error ? translate(locale, archiveError.message) : translate(locale, "Customer could not be archived."));
     } finally {
       setBusy(false);
     }
@@ -48,7 +51,7 @@ export function CustomerArchiveButton({
         onClick={() => void archive()}
         type="button"
       >
-        {busy ? "Archiving…" : "Archive customer"}
+        {translate(locale, busy ? "Archiving…" : "Archive customer")}
       </button>
       {error && <p aria-live="assertive" className="mt-2 text-xs text-red-700">{error}</p>}
     </div>

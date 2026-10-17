@@ -2,9 +2,12 @@
 
 import { useState } from "react";
 import { SignOut } from "@phosphor-icons/react";
+import { useLanguage } from "@/features/i18n/language-provider";
+import { translate } from "@/lib/i18n/messages";
 import { useRouter } from "next/navigation";
 
 export function SignOutButton() {
+  const { locale } = useLanguage();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
@@ -12,7 +15,7 @@ export function SignOutButton() {
     setBusy(true);
     try {
       const response = await fetch("/api/session", { method: "DELETE" });
-      if (!response.ok) throw new Error("The session could not be closed.");
+      if (!response.ok) throw new Error(translate(locale, "The session could not be closed."));
       router.replace("/login");
       router.refresh();
     } catch (error) {
@@ -28,7 +31,7 @@ export function SignOutButton() {
       onClick={() => void signOut()}
       type="button"
     >
-      <SignOut size={16} /> {busy ? "Signing out…" : "Sign out"}
+      <SignOut size={16} /> {translate(locale, busy ? "Signing out…" : "Sign out")}
     </button>
   );
 }

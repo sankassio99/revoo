@@ -8,7 +8,10 @@ const eslintConfig = [
     ignores: [
       ".next/**",
       "node_modules/**",
+      "dist/**",
+      "build/**",
       "coverage/**",
+      "**/*.min.js",
       "playwright-report/**",
       "test-results/**",
       "specs/**",

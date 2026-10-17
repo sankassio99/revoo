@@ -7,6 +7,8 @@ import { SignOutButton } from "@/features/auth/sign-out-button";
 import type { WorkspaceRole } from "@/lib/auth/authorization";
 import { MagneticLink } from "@/features/navigation/magnetic-link";
 import { MobileNav } from "@/features/navigation/mobile-nav";
+import { translate } from "@/lib/i18n/messages";
+import { getRequestLocale } from "@/lib/i18n/server";
 import {
   Sidebar,
   SidebarContent,
@@ -22,7 +24,7 @@ export type WorkspaceSummary = {
   role: WorkspaceRole;
 };
 
-export function AppFrame({
+export async function AppFrame({
   children,
   user,
   workspaces,
@@ -33,6 +35,7 @@ export function AppFrame({
   workspaces: WorkspaceSummary[];
   activeTenantId: string | null;
 }) {
+  const locale = await getRequestLocale();
   const active = workspaces.find((workspace) => workspace.tenantId === activeTenantId);
   const initials = (user.displayName ?? user.email ?? "R")
     .split(/[ .@_-]/)
@@ -48,7 +51,7 @@ export function AppFrame({
     <SidebarProvider className="min-h-[100dvh] bg-paper" style={sidebarStyle}>
       <Sidebar className="border-r-0 bg-forest">
         <SidebarHeader className="px-4 pb-3 pt-5">
-          <Link className="flex items-center gap-3 px-2 pb-5 pt-1" href="/" aria-label="Revoo home">
+          <Link className="flex items-center gap-3 px-2 pb-5 pt-1" href="/" aria-label={translate(locale, "Revoo home")}>
             <span className="grid size-9 place-items-center rounded-full border border-white/15 bg-white/10 text-white">
               <Sparkle size={16} weight="fill" />
             </span>
@@ -74,10 +77,10 @@ export function AppFrame({
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-xs font-medium text-white">
-                {user.displayName ?? "Your account"}
+                {user.displayName ?? translate(locale, "Your account")}
               </span>
               <span className="mt-1 block truncate text-[10px] text-white/50">
-                {active?.role ?? user.email ?? "Account"}
+                {active?.role ?? user.email ?? translate(locale, "Account")}
               </span>
             </span>
           </div>
@@ -94,13 +97,13 @@ export function AppFrame({
                 <Sparkle size={14} weight="fill" />
               </span>
               <span className="truncate text-sm font-semibold tracking-[-0.05em] text-forest">
-                {active?.name ?? "Your workspace"}
+                {active?.name ?? translate(locale, "Your workspace")}
               </span>
             </div>
             <div className="hidden text-xs text-muted md:block">
-              {active?.name ?? "Your workspace"}
+              {active?.name ?? translate(locale, "Your workspace")}
               <span className="mx-2 text-line">/</span>
-              {active?.role === "owner" ? "Owner workspace" : "Studio"}
+              {translate(locale, active?.role === "owner" ? "Owner workspace" : "Studio")}
             </div>
             <div className="flex items-center gap-2">
               {workspaces.length > 0 && (
@@ -113,8 +116,8 @@ export function AppFrame({
                 href="/workspace/appointments?new=1"
               >
                 <Plus size={15} weight="bold" />
-                <span className="hidden sm:inline">New appointment</span>
-                <span className="sm:hidden">Book</span>
+                <span className="hidden sm:inline">{translate(locale, "New appointment")}</span>
+                <span className="sm:hidden">{translate(locale, "Book")}</span>
               </MagneticLink>
             </div>
           </div>

@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { InvitationAcceptance } from "@/features/workspaces/invitation-acceptance";
 import { getSessionUser } from "@/lib/auth/session";
+import { getRequestLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/messages";
 
 export const dynamic = "force-dynamic";
 
@@ -10,10 +12,11 @@ export default async function AcceptInvitationPage({
   searchParams: Promise<{ tenantId?: string; token?: string }>;
 }) {
   const { tenantId, token } = await searchParams;
+  const locale = await getRequestLocale();
   if (!tenantId || !token) {
     return (
       <main className="grid min-h-[100dvh] place-items-center bg-paper px-5">
-        <p className="max-w-md text-center text-sm leading-6 text-muted">This invitation link is incomplete. Ask the workspace owner for a new one.</p>
+        <p className="max-w-md text-center text-sm leading-6 text-muted">{translate(locale, "This invitation link is incomplete. Ask the workspace owner for a new one.")}</p>
       </main>
     );
   }

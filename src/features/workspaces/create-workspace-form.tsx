@@ -3,9 +3,12 @@
 import { FormEvent, useState } from "react";
 import { ArrowRight, Buildings, WarningCircle } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
+import { useLanguage } from "@/features/i18n/language-provider";
+import { translate } from "@/lib/i18n/messages";
 
 export function CreateWorkspaceForm() {
   const router = useRouter();
+  const { locale } = useLanguage();
   const [name, setName] = useState("");
   const [currency, setCurrency] = useState("EUR");
   const [timeZone, setTimeZone] = useState("UTC");
@@ -38,7 +41,7 @@ export function CreateWorkspaceForm() {
           typeof payload.error === "string"
             ? payload.error
             : "We could not create the workspace.";
-        throw new Error(message);
+        throw new Error(translate(locale, message));
       }
 
       const activeResponse = await fetch("/api/workspaces/active", {
@@ -47,7 +50,7 @@ export function CreateWorkspaceForm() {
         body: JSON.stringify({ tenantId: payload.tenantId }),
       });
       if (!activeResponse.ok) {
-        throw new Error("Your workspace was created, but we could not open it. Refresh and try again.");
+        throw new Error(translate(locale, "Your workspace was created, but we could not open it. Refresh and try again."));
       }
 
       router.replace("/workspace");
@@ -56,7 +59,7 @@ export function CreateWorkspaceForm() {
       setError(
         submitError instanceof Error
           ? submitError.message
-          : "We could not create the workspace. Please try again.",
+          : translate(locale, "We could not create the workspace. Please try again."),
       );
     } finally {
       setBusy(false);
@@ -66,7 +69,7 @@ export function CreateWorkspaceForm() {
   return (
     <form className="mt-8 space-y-5" onSubmit={submit}>
       <label className="flex flex-col gap-2 text-xs font-medium text-ink" htmlFor="business-name">
-        Business name
+        {translate(locale, "Business name")}
         <input
           autoComplete="organization"
           className="min-h-12 rounded-xl border border-line bg-white px-4 text-sm outline-none transition focus:border-forest/50 focus:ring-4 focus:ring-forest/5"
@@ -74,7 +77,7 @@ export function CreateWorkspaceForm() {
           maxLength={80}
           minLength={2}
           onChange={(event) => setName(event.target.value)}
-          placeholder="The name on your door"
+          placeholder={translate(locale, "The name on your door")}
           required
           value={name}
         />
@@ -82,21 +85,21 @@ export function CreateWorkspaceForm() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="flex flex-col gap-2 text-xs font-medium text-ink" htmlFor="currency">
-          Currency
+          {translate(locale, "Currency")}
           <select
             className="min-h-12 rounded-xl border border-line bg-white px-4 text-sm outline-none transition focus:border-forest/50 focus:ring-4 focus:ring-forest/5"
             id="currency"
             onChange={(event) => setCurrency(event.target.value)}
             value={currency}
           >
-            <option value="EUR">Euro · EUR</option>
-            <option value="GBP">Pound sterling · GBP</option>
-            <option value="USD">US dollar · USD</option>
+            <option value="EUR">{translate(locale, "Euro")} · EUR</option>
+            <option value="GBP">{translate(locale, "Pound sterling")} · GBP</option>
+            <option value="USD">{translate(locale, "US dollar")} · USD</option>
           </select>
         </label>
 
         <label className="flex flex-col gap-2 text-xs font-medium text-ink" htmlFor="time-zone">
-          Time zone
+          {translate(locale, "Time zone")}
           <input
             autoComplete="off"
             className="min-h-12 rounded-xl border border-line bg-white px-4 text-sm outline-none transition focus:border-forest/50 focus:ring-4 focus:ring-forest/5"
@@ -110,7 +113,7 @@ export function CreateWorkspaceForm() {
       </div>
 
       <p className="text-xs leading-5 text-muted">
-        Your time zone keeps appointment times and business hours in step. You can adjust it later.
+        {translate(locale, "Your time zone keeps appointment times and business hours in step. You can adjust it later.")}
       </p>
 
       {error && (
@@ -125,7 +128,7 @@ export function CreateWorkspaceForm() {
         type="submit"
       >
         <Buildings size={17} />
-        {busy ? "Setting up…" : "Create workspace"}
+        {translate(locale, busy ? "Setting up…" : "Create workspace")}
         {!busy && <ArrowRight className="transition-transform group-hover:translate-x-0.5" size={16} />}
       </button>
     </form>

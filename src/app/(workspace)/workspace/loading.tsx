@@ -1,6 +1,11 @@
-export default function WorkspaceLoading() {
+import { getRequestLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/messages";
+
+export default async function WorkspaceLoading() {
+  const locale = await getRequestLocale();
+
   return (
-    <div aria-label="Loading your workspace" className="page-reveal">
+    <div aria-label={translate(locale, "Loading your workspace")} className="page-reveal">
       <div className="h-3 w-28 rounded-full soft-shimmer" />
       <div className="mt-4 h-11 w-72 max-w-full rounded-lg soft-shimmer" />
       <div className="mt-3 h-4 w-52 rounded-full soft-shimmer" />

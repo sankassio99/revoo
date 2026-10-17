@@ -3,6 +3,8 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { CustomerRecord } from "@/features/customers/customer.service";
+import { useLanguage } from "@/features/i18n/language-provider";
+import { translate } from "@/lib/i18n/messages";
 
 export function CustomerForm({
   tenantId,
@@ -12,6 +14,7 @@ export function CustomerForm({
   initial?: CustomerRecord;
 }) {
   const router = useRouter();
+  const { locale } = useLanguage();
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -55,19 +58,19 @@ export function CustomerForm({
         error?: string;
       };
       if (!response.ok) {
-        throw new Error(result.error ?? "Customer could not be saved.");
+        throw new Error(translate(locale, result.error ?? "Customer could not be saved."));
       }
 
       if (!initial) form.reset();
       setMessage(result.possibleDuplicate
-        ? "Customer saved. A similar name or phone number already exists; check before adding another record."
-        : "Customer saved.");
+        ? translate(locale, "Customer saved. A similar name or phone number already exists; check before adding another record.")
+        : translate(locale, "Customer saved."));
       router.refresh();
     } catch (submissionError) {
       setError(
         submissionError instanceof Error
           ? submissionError.message
-          : "Customer could not be saved.",
+          : translate(locale, "Customer could not be saved."),
       );
     } finally {
       setBusy(false);
@@ -77,7 +80,7 @@ export function CustomerForm({
   return (
     <form className="grid gap-4 sm:grid-cols-2" onSubmit={submit}>
       <label className="grid gap-2 text-xs font-medium text-ink">
-        Customer name
+        {translate(locale, "Customer name")}
         <input
           autoComplete="name"
           className="min-h-11 rounded-xl border border-line bg-white px-3.5 text-sm outline-none transition focus:border-forest focus:ring-2 focus:ring-forest/10"
@@ -88,7 +91,7 @@ export function CustomerForm({
         />
       </label>
       <label className="grid gap-2 text-xs font-medium text-ink">
-        Phone
+        {translate(locale, "Phone")}
         <input
           autoComplete="tel"
           className="min-h-11 rounded-xl border border-line bg-white px-3.5 text-sm outline-none transition focus:border-forest focus:ring-2 focus:ring-forest/10"
@@ -100,7 +103,7 @@ export function CustomerForm({
         />
       </label>
       <label className="grid gap-2 text-xs font-medium text-ink">
-        Email <span className="font-normal text-muted">Optional</span>
+        {translate(locale, "Email")} <span className="font-normal text-muted">{translate(locale, "Optional")}</span>
         <input
           autoComplete="email"
           className="min-h-11 rounded-xl border border-line bg-white px-3.5 text-sm outline-none transition focus:border-forest focus:ring-2 focus:ring-forest/10"
@@ -110,7 +113,7 @@ export function CustomerForm({
         />
       </label>
       <label className="grid gap-2 text-xs font-medium text-ink sm:col-span-2">
-        Notes <span className="font-normal text-muted">Optional</span>
+        {translate(locale, "Notes")} <span className="font-normal text-muted">{translate(locale, "Optional")}</span>
         <textarea
           className="min-h-20 resize-y rounded-xl border border-line bg-white px-3.5 py-3 text-sm outline-none transition focus:border-forest focus:ring-2 focus:ring-forest/10"
           maxLength={2000}
@@ -119,32 +122,32 @@ export function CustomerForm({
         />
       </label>
       <fieldset className="grid gap-3 rounded-xl bg-[#f0eee7] p-4 sm:col-span-2">
-        <legend className="text-xs font-medium text-ink">Communication preferences</legend>
+        <legend className="text-xs font-medium text-ink">{translate(locale, "Communication preferences")}</legend>
         {[
           { key: "whatsappService", label: "WhatsApp for appointment/service messages" },
           { key: "whatsappMarketing", label: "WhatsApp for marketing and reactivation" },
           { key: "emailMarketing", label: "Email for marketing and reactivation" },
         ].map((preference) => (
           <label className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted" key={preference.key}>
-            {preference.label}
+            {translate(locale, preference.label)}
             <select
               className="min-h-9 rounded-lg border border-line bg-white px-2 text-xs text-ink"
               defaultValue={initial?.communicationPreferences[preference.key as keyof CustomerRecord["communicationPreferences"]] ?? "unknown"}
               name={preference.key}
             >
-              <option value="unknown">Not recorded</option>
-              <option value="granted">Permission given</option>
-              <option value="denied">Opted out / denied</option>
+              <option value="unknown">{translate(locale, "Not recorded")}</option>
+              <option value="granted">{translate(locale, "Permission given")}</option>
+              <option value="denied">{translate(locale, "Opted out / denied")}</option>
             </select>
           </label>
         ))}
         <label className="grid gap-2 text-[11px] text-muted">
-          How was the preference captured?
+          {translate(locale, "How was the preference captured?")}
           <select className="min-h-9 rounded-lg border border-line bg-white px-2 text-xs text-ink" defaultValue="in_person" name="consentMethod">
-            <option value="in_person">In person</option>
-            <option value="phone">Phone</option>
-            <option value="website">Website</option>
-            <option value="other">Other</option>
+            <option value="in_person">{translate(locale, "In person")}</option>
+            <option value="phone">{translate(locale, "Phone")}</option>
+            <option value="website">{translate(locale, "Website")}</option>
+            <option value="other">{translate(locale, "Other")}</option>
           </select>
         </label>
       </fieldset>
@@ -154,7 +157,7 @@ export function CustomerForm({
           disabled={busy}
           type="submit"
         >
-          {busy ? "Saving…" : initial ? "Save changes" : "Save customer"}
+          {translate(locale, busy ? "Saving…" : initial ? "Save changes" : "Save customer")}
         </button>
         {message && <p aria-live="polite" className="text-xs text-forest">{message}</p>}
         {error && <p aria-live="assertive" className="text-xs text-red-700">{error}</p>}

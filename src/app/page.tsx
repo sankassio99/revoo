@@ -1,34 +1,35 @@
 import Link from "next/link";
 import { ArrowDownRight, ArrowRight, ArrowUpRight, Clock, Sparkle } from "@phosphor-icons/react/dist/ssr";
+import { LanguageSelector } from "@/features/i18n/language-selector";
+import { getMessages } from "@/lib/i18n/messages";
+import { getRequestLocale } from "@/lib/i18n/server";
 
-const highlights = [
-  { number: "01", title: "Know your day", detail: "Appointments and people, in one clear rhythm." },
-  { number: "02", title: "Keep the details", detail: "Every visit remembers what was agreed." },
-  { number: "03", title: "Make room to return", detail: "Thoughtful follow-up, on your terms." },
-];
+export default async function HomePage() {
+  const locale = await getRequestLocale();
+  const copy = getMessages(locale).home;
 
-export default function HomePage() {
   return (
     <main className="min-h-[100dvh] overflow-hidden bg-paper">
       <header className="mx-auto flex w-full max-w-[1440px] items-center justify-between px-5 py-5 sm:px-8 lg:px-12">
-        <Link className="group flex items-center gap-3" href="/" aria-label="Revoo home">
+        <Link className="group flex items-center gap-3" href="/" aria-label={copy.homeLink}>
           <span className="grid size-9 place-items-center rounded-full bg-forest text-white transition-transform duration-300 group-hover:rotate-[-8deg]">
             <Sparkle size={17} weight="fill" />
           </span>
           <span className="text-[19px] font-semibold tracking-[-0.06em]">revoo</span>
         </Link>
-        <nav aria-label="Main navigation" className="flex items-center gap-5">
+        <nav aria-label={copy.mainNavigation} className="flex items-center gap-2 sm:gap-5">
+          <LanguageSelector />
           <Link
             className="hidden text-sm text-muted transition-colors hover:text-ink sm:inline-flex"
             href="#approach"
           >
-            Our approach
+            {copy.approachLink}
           </Link>
           <Link
             className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line bg-white/70 px-5 text-sm font-medium transition-all duration-300 hover:-translate-y-px hover:border-forest/30 hover:bg-white active:scale-[0.98]"
             href="/login"
           >
-            Sign in <ArrowUpRight size={15} />
+            {copy.signIn} <ArrowUpRight size={15} />
           </Link>
         </nav>
       </header>
@@ -37,36 +38,35 @@ export default function HomePage() {
         <div className="page-reveal relative z-[1] max-w-[650px]">
           <p className="mb-8 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.19em] text-forest">
             <span className="size-1.5 rounded-full bg-accent" />
-            A little more in rhythm
+            {copy.eyebrow}
           </p>
           <h1 className="max-w-[620px] text-[clamp(3.25rem,7vw,6.25rem)] font-medium leading-[0.98] tracking-[-0.075em] text-ink">
-            Your business,
+            {copy.headline}
             <br />
-            <span className="font-normal text-forest">in good hands.</span>
+            <span className="font-normal text-forest">{copy.headlineEmphasis}</span>
           </h1>
           <p className="mt-7 max-w-[490px] text-base leading-7 text-muted sm:text-lg sm:leading-8">
-            Revoo brings the people, appointments, and small details of your studio into one
-            thoughtful place—so you can get back to the work you love.
+            {copy.introduction}
           </p>
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
             <Link
               className="group inline-flex min-h-12 items-center justify-center gap-3 rounded-full bg-forest px-6 text-sm font-medium text-white transition-all duration-300 hover:-translate-y-px hover:bg-[#20483b] active:scale-[0.98]"
               href="/login?mode=register"
             >
-              Create your workspace
+              {copy.createWorkspace}
               <ArrowRight className="transition-transform duration-300 group-hover:translate-x-0.5" size={16} />
             </Link>
             <Link
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-5 text-sm font-medium text-forest transition-colors hover:bg-forest/5"
               href="#approach"
             >
-              See what feels different <ArrowDownRight size={16} />
+              {copy.seeDifference} <ArrowDownRight size={16} />
             </Link>
           </div>
           <div className="mt-12 flex items-center gap-3 border-t border-line pt-5">
             <Clock className="text-accent" size={17} />
             <p className="text-xs leading-5 text-muted">
-              Made for the pace of independent salons and studios.
+              {copy.studioNote}
             </p>
           </div>
         </div>
@@ -87,10 +87,10 @@ export default function HomePage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
-                      A good day starts here
+                      {copy.illustrationEyebrow}
                     </p>
                     <h2 className="mt-3 max-w-[230px] text-3xl font-medium leading-[1.04] tracking-[-0.065em] text-forest sm:text-[2.75rem]">
-                      A little more room to be present.
+                      {copy.illustrationHeadline}
                     </h2>
                   </div>
                   <span className="rounded-full border border-white/70 bg-white/75 px-3 py-1.5 text-[10px] font-medium text-forest backdrop-blur-sm">
@@ -99,20 +99,20 @@ export default function HomePage() {
                 </div>
                 <div className="max-w-[260px] rounded-2xl border border-white/70 bg-white/85 p-4 shadow-[0_18px_38px_-24px_rgba(24,59,49,0.25)] backdrop-blur-sm">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold text-ink">Your morning</p>
+                    <p className="text-xs font-semibold text-ink">{copy.morning}</p>
                     <span className="size-2 rounded-full bg-accent status-pulse" />
                   </div>
                   <div className="mt-4 space-y-3">
                     <div className="flex items-center gap-3">
                       <span className="h-9 w-1 rounded-full bg-accent" />
                       <div>
-                        <p className="text-xs font-medium text-ink">A moment between</p>
-                        <p className="mt-0.5 text-[10px] text-muted">Take a breath. You have time.</p>
+                        <p className="text-xs font-medium text-ink">{copy.momentBetween}</p>
+                        <p className="mt-0.5 text-[10px] text-muted">{copy.takeBreath}</p>
                       </div>
                     </div>
                     <div className="h-px bg-line" />
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] text-muted">The day is taking shape</span>
+                      <span className="text-[10px] text-muted">{copy.dayTakingShape}</span>
                       <ArrowUpRight size={14} className="text-forest" />
                     </div>
                   </div>
@@ -121,7 +121,7 @@ export default function HomePage() {
             </div>
           </div>
           <p className="mt-4 text-right text-[10px] uppercase tracking-[0.16em] text-muted">
-            A quieter kind of business software
+            {copy.illustrationCaption}
           </p>
         </div>
       </section>
@@ -134,23 +134,23 @@ export default function HomePage() {
         <div className="mx-auto grid w-full max-w-[1440px] grid-cols-1 gap-10 px-5 py-14 sm:px-8 md:py-20 lg:grid-cols-[0.7fr_1.3fr] lg:px-12">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.19em] text-accent">
-              Less juggling, more focus
+              {copy.approachEyebrow}
             </p>
             <h2
               className="mt-4 max-w-[330px] text-3xl font-medium leading-tight tracking-[-0.065em] text-ink sm:text-4xl"
               id="approach-title"
             >
-              The care behind your craft, remembered.
+              {copy.approachDescription}
             </h2>
           </div>
           <div className="grid grid-cols-1 gap-0 divide-y divide-line md:grid-cols-3 md:divide-x md:divide-y-0">
-            {highlights.map((item, index) => (
+            {copy.highlights.map((item, index) => (
               <article
                 className="py-5 md:px-6 md:py-2 first:md:pl-0"
-                key={item.number}
+                key={item.title}
                 style={{ "--index": index } as React.CSSProperties}
               >
-                <p className="font-mono text-[10px] tracking-[0.15em] text-accent">{item.number}</p>
+                <p className="font-mono text-[10px] tracking-[0.15em] text-accent">{String(index + 1).padStart(2, "0")}</p>
                 <h3 className="mt-7 text-lg font-medium tracking-[-0.04em] text-ink">{item.title}</h3>
                 <p className="mt-2 max-w-[220px] text-sm leading-6 text-muted">{item.detail}</p>
               </article>
@@ -160,9 +160,9 @@ export default function HomePage() {
       </section>
 
       <footer className="mx-auto flex w-full max-w-[1440px] flex-col gap-4 px-5 py-7 text-xs text-muted sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-12">
-        <p>Revoo · Thoughtfully made for service businesses.</p>
+        <p>{copy.footerNote}</p>
         <Link className="inline-flex items-center gap-1 text-forest transition-colors hover:text-accent" href="/login">
-          Enter your workspace <ArrowRight size={13} />
+          {copy.enterWorkspace} <ArrowRight size={13} />
         </Link>
       </footer>
     </main>

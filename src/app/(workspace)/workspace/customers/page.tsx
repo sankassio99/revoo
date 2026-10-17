@@ -5,6 +5,9 @@ import { CustomerForm } from "@/features/customers/customer-form";
 import { listCustomers } from "@/features/customers/customer.service";
 import { getCurrentWorkspace } from "@/lib/auth/current-workspace";
 import { getSessionUser } from "@/lib/auth/session";
+import { getRequestLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/messages";
+import { formatNumber } from "@/lib/i18n/format";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +17,7 @@ export default async function CustomersPage({ searchParams }: PageProps) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
   const { workspace } = await getCurrentWorkspace(user);
+  const locale = await getRequestLocale();
   const { q = "" } = await searchParams;
   const query = q.trim().slice(0, 80);
   const customers = workspace ? await listCustomers(user, workspace.tenantId, query) : [];
@@ -22,24 +26,24 @@ export default async function CustomersPage({ searchParams }: PageProps) {
     <div className="page-reveal">
       <div className="flex flex-col justify-between gap-5 border-b border-line pb-7 sm:flex-row sm:items-end">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">The people behind the work</p>
-          <h1 className="mt-3 text-3xl font-medium tracking-[-0.065em] text-ink sm:text-[2.75rem]">Customers</h1>
-          <p className="mt-2 text-sm text-muted">A thoughtful record of the people you care for.</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">{translate(locale, "The people behind the work")}</p>
+          <h1 className="mt-3 text-3xl font-medium tracking-[-0.065em] text-ink sm:text-[2.75rem]">{translate(locale, "Customers")}</h1>
+          <p className="mt-2 text-sm text-muted">{translate(locale, "A thoughtful record of the people you care for.")}</p>
         </div>
         <form action="/workspace/customers" className="flex w-full gap-2 sm:max-w-sm">
           <label className="relative min-w-0 flex-1">
-            <span className="sr-only">Search by name or phone</span>
+            <span className="sr-only">{translate(locale, "Search by name or phone")}</span>
             <MagnifyingGlass className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" size={16} />
             <input
               className="min-h-11 w-full rounded-full border border-line bg-white pl-10 pr-4 text-sm outline-none transition focus:border-forest focus:ring-2 focus:ring-forest/10"
               defaultValue={query}
               name="q"
-              placeholder="Search name or phone"
+              placeholder={translate(locale, "Search name or phone")}
               type="search"
             />
           </label>
           <button className="min-h-11 rounded-full border border-line px-4 text-xs font-medium text-ink transition hover:bg-white" type="submit">
-            Search
+            {translate(locale, "Search")}
           </button>
         </form>
       </div>
@@ -52,8 +56,8 @@ export default async function CustomersPage({ searchParams }: PageProps) {
                 <UserPlus size={17} />
               </span>
               <div>
-                <h2 className="text-sm font-medium text-ink" id="add-customer-heading">Add someone new</h2>
-                <p className="mt-1 text-xs text-muted">Possible duplicates are flagged, never merged automatically.</p>
+                <h2 className="text-sm font-medium text-ink" id="add-customer-heading">{translate(locale, "Add someone new")}</h2>
+                <p className="mt-1 text-xs text-muted">{translate(locale, "Possible duplicates are flagged, never merged automatically.")}</p>
               </div>
             </div>
             <CustomerForm tenantId={workspace.tenantId} />
@@ -62,12 +66,12 @@ export default async function CustomersPage({ searchParams }: PageProps) {
           <section aria-labelledby="customer-list-heading" className="pt-7">
             <div className="flex items-end justify-between gap-4">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.17em] text-accent">Your community</p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.17em] text-accent">{translate(locale, "Your community")}</p>
                 <h2 className="mt-2 text-xl font-medium tracking-[-0.05em] text-ink" id="customer-list-heading">
-                  {query ? "Search results" : "All customers"}
+                  {translate(locale, query ? "Search results" : "All customers")}
                 </h2>
               </div>
-              <span className="text-xs text-muted">{customers.length}{customers.length === 100 ? "+" : ""} people</span>
+              <span className="text-xs text-muted">{formatNumber(customers.length, locale)}{customers.length === 100 ? "+" : ""} {translate(locale, "people")}</span>
             </div>
 
             {customers.length > 0 ? (
@@ -83,7 +87,7 @@ export default async function CustomersPage({ searchParams }: PageProps) {
                       </Link>
                       <p className="mt-1 truncate text-xs text-muted">{customer.phone}{customer.email ? ` · ${customer.email}` : ""}</p>
                     </div>
-                    <span className="hidden text-xs text-muted sm:block">{customer.notes ? "Notes on file" : "Customer"}</span>
+                    <span className="hidden text-xs text-muted sm:block">{translate(locale, customer.notes ? "Notes on file" : "Customer")}</span>
                   </li>
                 ))}
               </ul>
@@ -92,9 +96,9 @@ export default async function CustomersPage({ searchParams }: PageProps) {
                 <span className="grid size-11 place-items-center rounded-full bg-[#e5ebe5] text-forest">
                   <UsersThree size={19} />
                 </span>
-                <p className="mt-4 text-sm font-medium text-ink">{query ? "No customers found" : "Your customer list is ready"}</p>
+                <p className="mt-4 text-sm font-medium text-ink">{translate(locale, query ? "No customers found" : "Your customer list is ready")}</p>
                 <p className="mt-1 max-w-sm text-xs leading-5 text-muted">
-                  {query ? "Try a different name or phone number." : "Add your first customer above to keep their details and appointment history together."}
+                  {translate(locale, query ? "Try a different name or phone number." : "Add your first customer above to keep their details and appointment history together.")}
                 </p>
               </div>
             )}
@@ -102,9 +106,9 @@ export default async function CustomersPage({ searchParams }: PageProps) {
         </>
       ) : (
         <section className="flex min-h-64 flex-col items-center justify-center text-center">
-          <p className="text-sm font-medium text-ink">Create a workspace to get started</p>
+          <p className="text-sm font-medium text-ink">{translate(locale, "Create a workspace to get started")}</p>
           <Link className="mt-4 text-xs font-medium text-forest underline underline-offset-4" href="/workspace/new">
-            Set up your business
+            {translate(locale, "Set up your business")}
           </Link>
         </section>
       )}

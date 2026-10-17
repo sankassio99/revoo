@@ -11,33 +11,36 @@ import {
   signInWithEmailAndPassword,
 } from "firebase/auth";
 import { getClientFirebase } from "@/lib/firebase/client";
+import { useLanguage } from "@/features/i18n/language-provider";
+import { translate } from "@/lib/i18n/messages";
 
-function readableAuthError(error: unknown) {
+function readableAuthError(error: unknown, locale: "en" | "pt") {
   if (typeof error === "object" && error !== null && "code" in error) {
     const code = error.code;
     if (code === "auth/invalid-credential" || code === "auth/user-not-found") {
-      return "That email and password combination was not recognized.";
+      return translate(locale, "That email and password combination was not recognized.");
     }
     if (code === "auth/email-already-in-use") {
-      return "An account already exists for that email. Sign in instead.";
+      return translate(locale, "An account already exists for that email. Sign in instead.");
     }
     if (code === "auth/weak-password") {
-      return "Choose a password with at least 8 characters.";
+      return translate(locale, "Choose a password with at least 8 characters.");
     }
     if (code === "auth/invalid-email") {
-      return "Enter a valid email address.";
+      return translate(locale, "Enter a valid email address.");
     }
     if (code === "auth/network-request-failed") {
-      return "We could not reach the sign-in service. Check that the local emulators are running.";
+      return translate(locale, "We could not reach the sign-in service. Check that the local emulators are running.");
     }
   }
   return error instanceof Error
-    ? error.message
-    : "We could not complete sign-in. Please try again.";
+    ? translate(locale, error.message)
+    : translate(locale, "We could not complete sign-in. Please try again.");
 }
 
 export function AuthForm({ redirectTo = "/workspace" }: { redirectTo?: string }) {
   const router = useRouter();
+  const { locale } = useLanguage();
   const [isRegistering, setIsRegistering] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -59,7 +62,7 @@ export function AuthForm({ redirectTo = "/workspace" }: { redirectTo?: string })
         await sendEmailVerification(credential.user);
         await signOut(auth);
         setIsRegistering(false);
-        setMessage("Account created. Verify your email using the link we sent, then sign in.");
+        setMessage(translate(locale, "Account created. Verify your email using the link we sent, then sign in."));
         return;
       }
 
@@ -67,7 +70,7 @@ export function AuthForm({ redirectTo = "/workspace" }: { redirectTo?: string })
       if (!credential.user.emailVerified) {
         await sendEmailVerification(credential.user);
         await signOut(auth);
-        setMessage("Verify your email using the link we sent before signing in.");
+        setMessage(translate(locale, "Verify your email using the link we sent before signing in."));
         return;
       }
       const idToken = await credential.user.getIdToken(true);
@@ -85,14 +88,14 @@ export function AuthForm({ redirectTo = "/workspace" }: { redirectTo?: string })
           "error" in result &&
           typeof result.error === "string"
             ? result.error
-            : "Your session could not be established.";
-        throw new Error(detail);
+            : translate(locale, "Your session could not be established.");
+        throw new Error(translate(locale, detail));
       }
 
       router.replace(redirectTo);
       router.refresh();
     } catch (submitError) {
-      setError(readableAuthError(submitError));
+      setError(readableAuthError(submitError, locale));
     } finally {
       setIsSubmitting(false);
     }
@@ -104,34 +107,34 @@ export function AuthForm({ redirectTo = "/workspace" }: { redirectTo?: string })
         <LockKey size={19} weight="regular" />
       </div>
       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
-        Your workspace awaits
+        {translate(locale, "Your workspace awaits")}
       </p>
       <h2 className="mt-3 text-3xl font-medium tracking-[-0.065em] text-ink sm:text-[2.6rem]">
-        {isRegistering ? "Begin with Revoo." : "Good to see you."}
+        {translate(locale, isRegistering ? "Begin with Revoo." : "Good to see you.")}
       </h2>
       <p className="mt-3 text-sm leading-6 text-muted">
         {isRegistering
-          ? "Create an owner account to set up your first business workspace."
-          : "Sign in to get back to the people and plans in your day."}
+          ? translate(locale, "Create an owner account to set up your first business workspace.")
+          : translate(locale, "Sign in to get back to the people and plans in your day.")}
       </p>
 
       <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
         <label className="flex flex-col gap-2 text-xs font-medium text-ink" htmlFor="email">
-          Email address
+          {translate(locale, "Email address")}
           <input
             autoComplete="email"
             className="min-h-12 rounded-xl border border-line bg-white px-4 text-sm outline-none transition focus:border-forest/50 focus:ring-4 focus:ring-forest/5"
             id="email"
             name="email"
             onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@yourstudio.com"
+            placeholder={translate(locale, "you@yourstudio.com")}
             required
             type="email"
             value={email}
           />
         </label>
         <label className="flex flex-col gap-2 text-xs font-medium text-ink" htmlFor="password">
-          Password
+          {translate(locale, "Password")}
           <span className="relative block">
             <input
               autoComplete={isRegistering ? "new-password" : "current-password"}
@@ -140,13 +143,13 @@ export function AuthForm({ redirectTo = "/workspace" }: { redirectTo?: string })
               minLength={8}
               name="password"
               onChange={(event) => setPassword(event.target.value)}
-              placeholder="At least 8 characters"
+              placeholder={translate(locale, "At least 8 characters")}
               required
               type={showPassword ? "text" : "password"}
               value={password}
             />
             <button
-              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-label={translate(locale, showPassword ? "Hide password" : "Show password")}
               className="absolute inset-y-0 right-0 grid w-12 place-items-center text-muted transition-colors hover:text-forest"
               onClick={() => setShowPassword((visible) => !visible)}
               type="button"
@@ -177,7 +180,7 @@ export function AuthForm({ redirectTo = "/workspace" }: { redirectTo?: string })
           disabled={isSubmitting}
           type="submit"
         >
-          {isSubmitting ? "One moment…" : isRegistering ? "Create owner account" : "Sign in"}
+          {translate(locale, isSubmitting ? "One moment…" : isRegistering ? "Create owner account" : "Sign in")}
           {!isSubmitting && (
             <ArrowRight className="transition-transform duration-300 group-hover:translate-x-0.5" size={16} />
           )}
@@ -186,7 +189,7 @@ export function AuthForm({ redirectTo = "/workspace" }: { redirectTo?: string })
 
       <div className="my-6 flex items-center gap-3">
         <span className="h-px flex-1 bg-line" />
-        <span className="text-[10px] uppercase tracking-[0.15em] text-muted">or</span>
+        <span className="text-[10px] uppercase tracking-[0.15em] text-muted">{translate(locale, "or")}</span>
         <span className="h-px flex-1 bg-line" />
       </div>
 
@@ -198,13 +201,13 @@ export function AuthForm({ redirectTo = "/workspace" }: { redirectTo?: string })
         }}
         type="button"
       >
-        {isRegistering ? "I already have an account" : "Create a new workspace"}
+        {translate(locale, isRegistering ? "I already have an account" : "Create a new workspace")}
       </button>
 
       {!isRegistering && (
         <div className="mt-5 text-center">
           <Link className="text-xs text-muted underline decoration-line underline-offset-4 transition-colors hover:text-forest" href="/recover">
-            Forgot password?
+            {translate(locale, "Forgot password?")}
           </Link>
         </div>
       )}

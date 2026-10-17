@@ -9,6 +9,9 @@ import { formatLocalDate, formatLocalTime, getLocalDateTime, getLocalDayBounds, 
 import { getCurrentWorkspace } from "@/lib/auth/current-workspace";
 import { getSessionUser } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
+import { getRequestLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/messages";
+import { formatNumber } from "@/lib/i18n/format";
 
 export const dynamic = "force-dynamic";
 
@@ -30,14 +33,15 @@ export default async function AppointmentsPage({ searchParams }: PageProps) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
   const { workspace } = await getCurrentWorkspace(user);
+  const locale = await getRequestLocale();
   const { date: requestedDate, view: requestedView, new: newAppointment } = await searchParams;
 
   if (!workspace) {
     return (
       <section className="py-12">
-        <h1 className="text-3xl font-medium tracking-[-0.06em] text-ink">Appointments</h1>
-        <p className="mt-2 text-sm text-muted">Create a workspace before building your calendar.</p>
-        <Link className="mt-4 inline-block text-sm text-forest underline underline-offset-4" href="/workspace/new">Create a workspace</Link>
+        <h1 className="text-3xl font-medium tracking-[-0.06em] text-ink">{translate(locale, "Appointments")}</h1>
+        <p className="mt-2 text-sm text-muted">{translate(locale, "Create a workspace before building your calendar.")}</p>
+        <Link className="mt-4 inline-block text-sm text-forest underline underline-offset-4" href="/workspace/new">{translate(locale, "Create a workspace")}</Link>
       </section>
     );
   }
@@ -55,12 +59,12 @@ export default async function AppointmentsPage({ searchParams }: PageProps) {
     const endDay = addCalendarDays(startDay, 7);
     rangeStart = getLocalDayBounds(localDateTimeToUtc(`${startDay}T12:00`, workspace.timeZone), workspace.timeZone).start;
     rangeEnd = getLocalDayBounds(localDateTimeToUtc(`${endDay}T12:00`, workspace.timeZone), workspace.timeZone).start;
-    rangeTitle = `${formatLocalDate(rangeStart, workspace.timeZone)} – ${formatLocalDate(new Date(rangeEnd.getTime() - 1), workspace.timeZone)}`;
+    rangeTitle = `${formatLocalDate(rangeStart, workspace.timeZone, locale)} – ${formatLocalDate(new Date(rangeEnd.getTime() - 1), workspace.timeZone, locale)}`;
   } else {
     const bounds = getLocalDayBounds(selectedLocal, workspace.timeZone);
     rangeStart = bounds.start;
     rangeEnd = bounds.end;
-    rangeTitle = formatLocalDate(rangeStart, workspace.timeZone);
+    rangeTitle = formatLocalDate(rangeStart, workspace.timeZone, locale);
   }
 
   const [appointments, customers, catalog] = await Promise.all([
@@ -74,12 +78,12 @@ export default async function AppointmentsPage({ searchParams }: PageProps) {
     customerId: appointment.customerId,
     customerName: appointment.customerName,
     serviceName: appointment.serviceName,
-    professionalName: professionalsById.get(appointment.professionalId) ?? "Team member",
+    professionalName: professionalsById.get(appointment.professionalId) ?? translate(locale, "Team member"),
     startAt: appointment.startAt.toISOString(),
     endAt: appointment.endAt.toISOString(),
     localStart: getLocalDateTime(appointment.startAt, workspace.timeZone),
-    localTime: formatLocalTime(appointment.startAt, workspace.timeZone),
-    localDate: formatLocalDate(appointment.startAt, workspace.timeZone),
+    localTime: formatLocalTime(appointment.startAt, workspace.timeZone, locale),
+    localDate: formatLocalDate(appointment.startAt, workspace.timeZone, locale),
     status: appointment.status,
     amountChargedMinorUnits: appointment.amountChargedMinorUnits,
     priceMinorUnits: appointment.priceMinorUnits,
@@ -94,23 +98,23 @@ export default async function AppointmentsPage({ searchParams }: PageProps) {
       <div className="flex flex-col justify-between gap-5 border-b border-line pb-7 sm:flex-row sm:items-end">
         <div>
           <p className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">
-            <CalendarBlank size={14} /> Find a little rhythm
+            <CalendarBlank size={14} /> {translate(locale, "Find a little rhythm")}
           </p>
-          <h1 className="mt-3 text-3xl font-medium tracking-[-0.065em] text-ink sm:text-[2.75rem]">Appointments</h1>
+          <h1 className="mt-3 text-3xl font-medium tracking-[-0.065em] text-ink sm:text-[2.75rem]">{translate(locale, "Appointments")}</h1>
           <p className="mt-2 text-sm text-muted">{rangeTitle} <span className="px-1 text-line">·</span> {workspace.timeZone}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Link aria-label="Previous period" className="grid size-10 place-items-center rounded-full border border-line bg-white text-muted hover:text-forest" href={dateHref(previousDate)}>
+          <Link aria-label={translate(locale, "Previous period")} className="grid size-10 place-items-center rounded-full border border-line bg-white text-muted hover:text-forest" href={dateHref(previousDate)}>
             <CaretLeft size={16} />
           </Link>
           <Link className="min-h-10 rounded-full border border-line bg-white px-4 py-3 text-xs font-medium text-ink hover:border-forest/40" href={dateHref(today)}>
-            Today
+            {translate(locale, "Today")}
           </Link>
-          <Link aria-label="Next period" className="grid size-10 place-items-center rounded-full border border-line bg-white text-muted hover:text-forest" href={dateHref(nextDate)}>
+          <Link aria-label={translate(locale, "Next period")} className="grid size-10 place-items-center rounded-full border border-line bg-white text-muted hover:text-forest" href={dateHref(nextDate)}>
             <CaretRight size={16} />
           </Link>
           <Link className="ml-2 text-xs font-medium text-muted hover:text-forest" href={dateHref(date, view === "day" ? "week" : "day")}>
-            {view === "day" ? "Week" : "Day"} view
+            {translate(locale, view === "day" ? "Week" : "Day")} {translate(locale, "view")}
           </Link>
         </div>
       </div>
@@ -126,13 +130,13 @@ export default async function AppointmentsPage({ searchParams }: PageProps) {
         tenantId={workspace.tenantId}
       />
 
-      <section aria-label={`${view} appointment calendar`} className="pt-7">
+      <section aria-label={`${translate(locale, view)} ${translate(locale, "appointment calendar")}`} className="pt-7">
         <div className="mb-4 flex items-end justify-between gap-3">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.17em] text-accent">{view === "day" ? "One day at a time" : "The week ahead"}</p>
-            <h2 className="mt-2 text-xl font-medium tracking-[-0.05em] text-ink">{view === "day" ? "Daily schedule" : "Weekly schedule"}</h2>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.17em] text-accent">{translate(locale, view === "day" ? "One day at a time" : "The week ahead")}</p>
+            <h2 className="mt-2 text-xl font-medium tracking-[-0.05em] text-ink">{translate(locale, view === "day" ? "Daily schedule" : "Weekly schedule")}</h2>
           </div>
-          <span className="text-xs text-muted">{calendarItems.length} appointments</span>
+          <span className="text-xs text-muted">{formatNumber(calendarItems.length, locale)} {translate(locale, "appointments")}</span>
         </div>
         <AppointmentCalendar appointments={calendarItems} currency={workspace.currency} tenantId={workspace.tenantId} view={view} />
       </section>

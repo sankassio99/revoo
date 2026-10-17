@@ -22,9 +22,12 @@ import {
   type NavigationDestination,
 } from "@/features/navigation/navigation-items";
 import { resolveNavigation } from "@/features/navigation/navigation-match";
+import { useLanguage } from "@/features/i18n/language-provider";
+import { translate } from "@/lib/i18n/messages";
 
 export function SidebarNav() {
   const pathname = usePathname();
+  const { locale } = useLanguage();
   const match = resolveNavigation(pathname);
   const { isMobile, setOpenMobile } = useSidebar();
   const [collapsedSettingsPath, setCollapsedSettingsPath] = useState<string | null>(null);
@@ -63,7 +66,7 @@ export function SidebarNav() {
           render={<Link href={item.href} />}
         >
           <Icon aria-hidden="true" size={18} weight={active ? "fill" : "regular"} />
-          <span>{item.label}</span>
+          <span>{translate(locale, item.label)}</span>
         </SidebarMenuSubButton>
       );
     }
@@ -77,16 +80,16 @@ export function SidebarNav() {
         render={<Link href={item.href} />}
       >
         <Icon aria-hidden="true" size={18} weight={active ? "fill" : "regular"} />
-        <span>{item.label}</span>
+        <span>{translate(locale, item.label)}</span>
       </SidebarMenuButton>
     );
   }
 
   return (
-    <nav aria-label="Workspace navigation">
+    <nav aria-label={translate(locale, "Workspace navigation")}>
       <SidebarGroup>
         <SidebarGroupLabel className="px-3 text-[9px] font-semibold uppercase tracking-[0.2em] text-white/45">
-          Workspace
+          {translate(locale, "Workspace")}
         </SidebarGroupLabel>
         <SidebarMenu>
           {navigationItems.map((item) => {
@@ -106,12 +109,12 @@ export function SidebarNav() {
                 <SidebarMenuButton
                   aria-controls="settings-navigation"
                   aria-expanded={settingsExpanded}
-                  aria-label={item.label}
+                  aria-label={translate(locale, item.label)}
                   isActive={active}
                   onClick={toggleSettings}
                 >
                   <Icon aria-hidden="true" size={18} weight={active ? "fill" : "regular"} />
-                  <span>{item.label}</span>
+                  <span>{translate(locale, item.label)}</span>
                   <CaretDown
                     aria-hidden="true"
                     className={`ml-auto transition-transform ${settingsExpanded ? "rotate-180" : ""}`}
@@ -121,7 +124,7 @@ export function SidebarNav() {
                 <SidebarMenuSub
                   id="settings-navigation"
                   hidden={!settingsExpanded}
-                  aria-label="Settings pages"
+                  aria-label={translate(locale, "Settings pages")}
                 >
                   {item.items.map((child) => (
                     <SidebarMenuSubItem key={child.href}>

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLanguage } from "@/features/i18n/language-provider";
+import { translate } from "@/lib/i18n/messages";
 
 export type CalendarAppointment = {
   id: string;
@@ -39,6 +41,7 @@ export function AppointmentCalendar({
   currency: string;
 }) {
   const router = useRouter();
+  const { locale } = useLanguage();
   const [busyId, setBusyId] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -54,11 +57,11 @@ export function AppointmentCalendar({
         body: JSON.stringify({ appointmentId, ...payload }),
       });
       const result = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(result.error ?? "Appointment could not be updated.");
-      setMessage("Appointment updated.");
+      if (!response.ok) throw new Error(translate(locale, result.error ?? "Appointment could not be updated."));
+      setMessage(translate(locale, "Appointment updated."));
       router.refresh();
     } catch (updateError) {
-      setError(updateError instanceof Error ? updateError.message : "Appointment could not be updated.");
+      setError(updateError instanceof Error ? translate(locale, updateError.message) : translate(locale, "Appointment could not be updated."));
     } finally {
       setBusyId("");
     }
@@ -67,8 +70,8 @@ export function AppointmentCalendar({
   if (!appointments.length) {
     return (
       <div className="border-y border-line py-10">
-        <p className="text-sm font-medium text-ink">A little breathing room.</p>
-        <p className="mt-1 text-xs leading-5 text-muted">There are no appointments in this view yet.</p>
+        <p className="text-sm font-medium text-ink">{translate(locale, "A little breathing room.")}</p>
+        <p className="mt-1 text-xs leading-5 text-muted">{translate(locale, "There are no appointments in this view yet.")}</p>
       </div>
     );
   }
@@ -80,7 +83,7 @@ export function AppointmentCalendar({
   return (
     <div>
       {[...groups.entries()].map(([date, items]) => (
-        <section aria-label={date || "Daily appointments"} className="mb-8 last:mb-0" key={date || "day"}>
+        <section aria-label={date || translate(locale, "Daily appointments")} className="mb-8 last:mb-0" key={date || "day"}>
           {date && (
             <h3 className="border-y border-line py-3 text-xs font-semibold text-ink">
               {items[0]?.localDate}
@@ -98,13 +101,13 @@ export function AppointmentCalendar({
                     {appointment.serviceName} <span className="px-1 text-line">·</span> {appointment.professionalName}
                   </p>
                   <span className="mt-2 inline-flex rounded-full bg-forest-soft px-2.5 py-1 text-[10px] font-medium text-forest">
-                    {appointment.status}
+                    {translate(locale, appointment.status)}
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:justify-end">
                   {transitions[appointment.status].map((status) => status === "Completed" ? (
                     <details className="relative" key={status}>
-                      <summary className="cursor-pointer text-[11px] font-medium text-forest hover:underline">Complete</summary>
+                      <summary className="cursor-pointer text-[11px] font-medium text-forest hover:underline">{translate(locale, "Complete")}</summary>
                       <form
                         className="absolute right-0 top-7 z-[1] grid w-56 gap-3 rounded-xl border border-line bg-white p-3 shadow-lg"
                         onSubmit={(event) => {
@@ -121,10 +124,10 @@ export function AppointmentCalendar({
                         }}
                       >
                         <label className="grid gap-1 text-[10px] font-medium text-muted">
-                          Amount charged ({currency})
+                          {translate(locale, "Amount charged")} ({currency})
                           <input className="min-h-9 rounded-lg border border-line px-2 text-xs text-ink" defaultValue={(appointment.amountChargedMinorUnits ?? appointment.priceMinorUnits) / 100} min={0} name="amountCharged" step="0.01" type="number" />
                         </label>
-                        <button className="min-h-9 rounded-full bg-forest text-xs font-medium text-white disabled:opacity-60" disabled={busyId === appointment.id} type="submit">Save completion</button>
+                        <button className="min-h-9 rounded-full bg-forest text-xs font-medium text-white disabled:opacity-60" disabled={busyId === appointment.id} type="submit">{translate(locale, "Save completion")}</button>
                       </form>
                     </details>
                   ) : (
@@ -135,12 +138,12 @@ export function AppointmentCalendar({
                       onClick={() => void update({ action: "status", status }, appointment.id)}
                       type="button"
                     >
-                      {status === "NoShow" ? "Mark no-show" : status === "Cancelled" ? "Cancel" : status}
+                      {translate(locale, status === "NoShow" ? "Mark no-show" : status === "Cancelled" ? "Cancel" : status)}
                     </button>
                   ))}
                   {(appointment.status === "Scheduled" || appointment.status === "Confirmed") && (
                     <details className="relative">
-                      <summary className="cursor-pointer text-[11px] font-medium text-forest hover:underline">Reschedule</summary>
+                      <summary className="cursor-pointer text-[11px] font-medium text-forest hover:underline">{translate(locale, "Reschedule")}</summary>
                       <form
                         className="absolute right-0 top-7 z-[1] grid w-60 gap-3 rounded-xl border border-line bg-white p-3 shadow-lg"
                         onSubmit={(event) => {
@@ -153,10 +156,10 @@ export function AppointmentCalendar({
                         }}
                       >
                         <label className="grid gap-1 text-[10px] font-medium text-muted">
-                          New date and time
+                          {translate(locale, "New date and time")}
                           <input className="min-h-9 rounded-lg border border-line px-2 text-xs text-ink" defaultValue={appointment.localStart} name="localStart" required type="datetime-local" />
                         </label>
-                        <button className="min-h-9 rounded-full bg-forest text-xs font-medium text-white disabled:opacity-60" disabled={busyId === appointment.id} type="submit">Save new time</button>
+                        <button className="min-h-9 rounded-full bg-forest text-xs font-medium text-white disabled:opacity-60" disabled={busyId === appointment.id} type="submit">{translate(locale, "Save new time")}</button>
                       </form>
                     </details>
                   )}

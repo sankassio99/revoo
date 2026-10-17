@@ -3,6 +3,7 @@ import "server-only";
 import { Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import type { SessionUser } from "@/lib/auth/session";
+import type { Locale } from "@/lib/i18n/locale";
 import { requireWorkspaceMember } from "@/lib/auth/authorization";
 import { formatLocalDate, getLocalDayBounds } from "@/lib/domain/time";
 
@@ -81,6 +82,7 @@ export async function getDashboardOverview(
   tenantId: string,
   timeZone: string,
   now = new Date(),
+  locale: Locale = "en",
 ) {
   await requireWorkspaceMember(user, tenantId);
   const { start, end } = getLocalDayBounds(now, timeZone);
@@ -168,7 +170,7 @@ export async function getDashboardOverview(
   });
 
   return {
-    localDate: formatLocalDate(now, timeZone),
+    localDate: formatLocalDate(now, timeZone, locale),
     appointments,
     statusCounts,
     totalAppointments: today.size,
