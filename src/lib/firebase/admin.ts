@@ -1,6 +1,6 @@
 import "server-only";
 
-import { applicationDefault, getApp, getApps, initializeApp } from "firebase-admin/app";
+import { applicationDefault, cert, getApp, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 
@@ -18,14 +18,25 @@ function initializeAdminApp() {
     throw new Error("FIREBASE_PROJECT_ID must be configured on the server.");
   }
 
-  const isEmulated = Boolean(
-    process.env.FIRESTORE_EMULATOR_HOST || process.env.FIREBASE_AUTH_EMULATOR_HOST,
-  );
-
   return initializeApp({
-    ...(isEmulated ? {} : { credential: applicationDefault() }),
+    credential: resolveCredential(projectId),
     projectId,
   });
+}
+
+// Vercel has no credential file: use env vars, falling back to ADC locally.
+function resolveCredential(projectId: string) {
+  const json = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+  if (json) {
+    const parsed = JSON.parse(json) as { client_email: string; private_key: string };
+    return cert({
+      projectId,
+      clientEmail: parsed.client_email,
+      privateKey: parsed.private_key.replace(/\\n/g, "\n"),
+    });
+  }
+
+  return applicationDefault();
 }
 
 const app = getApps().length > 0 ? getApp() : initializeAdminApp();
