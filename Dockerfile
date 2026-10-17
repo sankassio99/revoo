@@ -15,7 +15,7 @@ ENV NEXT_PUBLIC_FIREBASE_API_KEY=$NEXT_PUBLIC_FIREBASE_API_KEY \
     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=$NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN \
     NEXT_PUBLIC_FIREBASE_PROJECT_ID=$NEXT_PUBLIC_FIREBASE_PROJECT_ID \
     NEXT_PUBLIC_FIREBASE_APP_ID=$NEXT_PUBLIC_FIREBASE_APP_ID
-RUN npm run build
+RUN npx next build
 
 FROM node:22-bookworm-slim AS runner
 WORKDIR /app
@@ -28,4 +28,4 @@ COPY --from=builder --chown=app:app /app/.next/static ./.next/static
 COPY --from=builder --chown=app:app /app/public ./public
 USER app
 EXPOSE 3000
-CMD ["node", "server.js"]
+CMD ["sh", "-c", "printf '%s' \"$GOOGLE_SERVICE_ACCOUNT_JSON\" > /tmp/service-account.json && GOOGLE_APPLICATION_CREDENTIALS=/tmp/service-account.json exec node server.js"]
