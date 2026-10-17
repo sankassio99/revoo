@@ -106,11 +106,6 @@ export async function AppFrame({
               {translate(locale, active?.role === "owner" ? "Owner workspace" : "Studio")}
             </div>
             <div className="flex items-center gap-2">
-              {workspaces.length > 0 && (
-                <div className="md:hidden">
-                  <WorkspaceSwitcher activeTenantId={activeTenantId} workspaces={workspaces} />
-                </div>
-              )}
               <MagneticLink
                 className="group inline-flex min-h-10 items-center gap-2 rounded-full bg-forest px-4 text-xs font-medium text-white transition-colors hover:bg-[#20483b] active:scale-[0.98]"
                 href="/workspace/appointments?new=1"

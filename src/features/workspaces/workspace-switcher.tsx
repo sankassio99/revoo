@@ -48,6 +48,24 @@ export function WorkspaceSwitcher({
     }
   }
 
+  if (workspaces.length < 2) {
+    return (
+      <div className="flex min-w-0 items-center gap-3 rounded-xl px-3 py-2.5">
+        <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-white/10 text-[#d0a186]">
+          <Storefront size={17} />
+        </span>
+        <span className="min-w-0">
+          <span className="block truncate text-xs font-medium text-white">
+            {active?.name ?? translate(locale, "Your workspace")}
+          </span>
+          <span className="mt-1 block text-[10px] capitalize text-white/50">
+            {active?.role ? translate(locale, active.role) : translate(locale, "Workspace")}
+          </span>
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className="relative">
       <button
