@@ -5,9 +5,10 @@ import { ClientIdentification } from "@/features/public-booking/client-identific
 import { BookingConfirmation, type PublicBookingConfirmation } from "@/features/public-booking/booking-confirmation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { translate } from "@/lib/i18n/messages";
-import { useLanguage } from "../i18n/language-provider";
+import { useLanguage } from "@/features/i18n/language-provider";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ChevronDownIcon } from "lucide-react";
+import { formatDate, formatNumber } from "@/lib/i18n/format";
 
 type Service = { id: string; name: string; durationMinutes: number; priceMinorUnits: number };
 type Professional = { id: string; name: string; serviceIds: string[] };
@@ -24,8 +25,19 @@ function localToday(timeZone: string) {
 
 export function BookingSelection({ tenantId, options }: { tenantId: string; options: Options }) {
   const { locale } = useLanguage();
+  const t = (text: string) => translate(locale, text);
   const today = useMemo(() => localToday(options.workspace.timeZone), [options.workspace.timeZone]);
+
   const [selection, setSelection] = useState<Selection>({ professionalId: "", serviceIds: [], date: today, time: "" });
+
+  const displayDate = useMemo(() => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(selection.date)) return selection.date;
+    const date = new Date(`${selection.date}T00:00:00.000Z`);
+    return Number.isNaN(date.valueOf())
+      ? selection.date
+      : formatDate(date, locale, { dateStyle: "medium", timeZone: "UTC" });
+  }, [locale, selection.date]);
+
   const [hydrated, setHydrated] = useState(false);
   const [stage, setStage] = useState<"selection" | "identity" | "confirm" | "complete">("selection");
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
@@ -82,14 +94,14 @@ export function BookingSelection({ tenantId, options }: { tenantId: string; opti
       void fetch(`/api/public/workspaces/${encodeURIComponent(tenantId)}/availability?${query}`, { signal: controller.signal })
         .then(async (response) => {
           const result = await response.json();
-          if (!response.ok) throw new Error(result.error ?? "Availability could not be loaded.");
+          if (!response.ok) throw new Error(t(result.error ?? "Availability could not be loaded."));
           setAvailableTimes(result.availableTimes ?? []);
           setDurationMinutes(result.durationMinutes ?? 0);
           setPriceMinorUnits(result.priceMinorUnits ?? 0);
           setAvailabilityResultKey(currentKey);
         })
         .catch((cause: unknown) => {
-          if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : "Availability could not be loaded.");
+          if (!controller.signal.aborted) setError(t(cause instanceof Error ? cause.message : "Availability could not be loaded."));
         })
         .finally(() => { if (!controller.signal.aborted) setAvailabilityBusy(false); });
     }, 0);
@@ -129,16 +141,16 @@ export function BookingSelection({ tenantId, options }: { tenantId: string; opti
       if (response.status === 409) {
         setSelection((current) => ({ ...current, time: "" }));
         setStage("selection");
-        setMessage("That time was just taken. Choose another available time; your other choices are saved.");
+          setMessage(t("That time was just taken. Choose another available time; your other choices are saved."));
         setRefresh((current) => current + 1);
         return;
       }
-      if (!response.ok) throw new Error(result.error ?? "We could not confirm this appointment.");
+      if (!response.ok) throw new Error(t(result.error ?? "We could not confirm this appointment."));
       setConfirmation(result.appointment as PublicBookingConfirmation);
       setStage("complete");
       sessionStorage.removeItem(selectionKey);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "We could not confirm this appointment.");
+      setError(t(cause instanceof Error ? cause.message : "We could not confirm this appointment."));
     } finally {
       setBookingBusy(false);
     }
@@ -149,15 +161,15 @@ export function BookingSelection({ tenantId, options }: { tenantId: string; opti
     <div className="grid gap-6 lg:grid-cols-[1.25fr_.75fr]">
       <section className="rounded-3xl border border-line bg-white p-6 shadow-sm sm:p-8" aria-labelledby="booking-selection-title">
         <div className="flex items-start justify-between gap-4">
-          <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Appointment details</p><h2 id="booking-selection-title" className="mt-2 text-2xl font-medium tracking-tight text-ink">Choose a time</h2></div>
+          <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">{t("Appointment details")}</p><h2 id="booking-selection-title" className="mt-2 text-2xl font-medium tracking-tight text-ink">{t("Choose a time")}</h2></div>
           <span className="rounded-full bg-forest-soft px-3 py-1.5 text-[11px] font-medium text-forest">{options.workspace.timeZone}</span>
         </div>
         {options.services.length === 0 || options.professionals.length === 0 ? (
-          <p className="mt-6 rounded-2xl bg-[#f4f5f0] p-5 text-sm text-muted">This workspace has no bookable services or professionals at the moment. Please check again later.</p>
+          <p className="mt-6 rounded-2xl bg-[#f4f5f0] p-5 text-sm text-muted">{t("This workspace has no bookable services or professionals at the moment. Please check again later.")}</p>
         ) : (
           <div className="mt-6 grid gap-5">
             <label className="grid gap-2 text-xs font-medium text-ink" htmlFor="booking-professional">
-              Professional
+              {t("Professional")}
 
               <Select
                 items={options.professionals.map((professional) => ({ value: professional.id, label: professional.name }))}
@@ -174,14 +186,14 @@ export function BookingSelection({ tenantId, options }: { tenantId: string; opti
             </label>
 
             <div className="grid gap-2">
-              <span className="text-xs font-medium text-ink" id="booking-services-label">Services</span>
+              <span className="text-xs font-medium text-ink" id="booking-services-label">{t("Services")}</span>
               <DropdownMenu>
                 <DropdownMenuTrigger
                   aria-labelledby="booking-services-label"
                   className="flex min-h-12 w-full items-center justify-between rounded-xl border border-line bg-white px-4 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-forest/40"
                 >
                   <span className={selectedServices.length ? "text-ink" : "text-muted"}>
-                    {selectedServices.length ? selectedServices.map((service) => service.name).join(", ") : translate(locale, "Choose services")}
+                    {selectedServices.length ? selectedServices.map((service) => service.name).join(", ") : t("Choose services")}
                   </span>
                   <ChevronDownIcon className="size-4 shrink-0 text-muted" />
                 </DropdownMenuTrigger>
@@ -198,7 +210,7 @@ export function BookingSelection({ tenantId, options }: { tenantId: string; opti
                       >
                         <span className="flex-1">
                           {service.name}
-                          <span className="block text-xs text-muted">{service.durationMinutes} min · {(service.priceMinorUnits / 100).toFixed(2)}</span>
+                          <span className="block text-xs text-muted">{formatNumber(service.durationMinutes, locale)} {t("min")} · {formatNumber(service.priceMinorUnits / 100, locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         </span>
                       </DropdownMenuCheckboxItem>
                     );
@@ -207,34 +219,34 @@ export function BookingSelection({ tenantId, options }: { tenantId: string; opti
               </DropdownMenu>
             </div>
 
-            <label className="grid max-w-xs gap-2 text-xs font-medium text-ink" htmlFor="booking-date">Date
+            <label className="grid max-w-xs gap-2 text-xs font-medium text-ink" htmlFor="booking-date">{t("Date")}
               <input className="min-h-12 rounded-xl border border-line bg-[#fbfcf9] px-4 text-sm" id="booking-date" min={today} onChange={(event) => setSelection((current) => ({ ...current, date: event.target.value, time: "" }))} type="date" value={selection.date} />
             </label>
             <div>
-              <h3 className="text-xs font-medium text-ink">Available start times</h3>
-              {!selection.professionalId || !selection.serviceIds.length ? <p className="mt-2 text-sm text-muted">Choose a professional and at least one service to see available times.</p>
-                : availabilityBusy || availabilityResultKey !== currentAvailabilityKey ? <p className="mt-2 text-sm text-muted">Checking this day’s availability…</p>
+              <h3 className="text-xs font-medium text-ink">{t("Available start times")}</h3>
+              {!selection.professionalId || !selection.serviceIds.length ? <p className="mt-2 text-sm text-muted">{t("Choose a professional and at least one service to see available times.")}</p>
+                : availabilityBusy || availabilityResultKey !== currentAvailabilityKey ? <p className="mt-2 text-sm text-muted">{t("Checking this day’s availability…")}</p>
                   : currentAvailableTimes.length ? <div className="mt-3 flex flex-wrap gap-2">{currentAvailableTimes.map((time) => <button aria-pressed={selection.time === time} className={`min-h-10 rounded-full border px-4 text-sm ${selection.time === time ? "border-forest bg-forest text-white" : "border-line bg-white text-ink hover:border-forest/50"}`} key={time} onClick={() => setSelection((current) => ({ ...current, time }))} type="button">{time}</button>)}</div>
-                    : <p className="mt-2 rounded-xl bg-[#f4f5f0] px-4 py-3 text-sm text-muted">No times are available for these choices. Try another date or change the services or professional.</p>}
+                    : <p className="mt-2 rounded-xl bg-[#f4f5f0] px-4 py-3 text-sm text-muted">{t("No times are available for these choices. Try another date or change the services or professional.")}</p>}
             </div>
           </div>
         )}
         {error && <p aria-live="polite" className="mt-4 rounded-xl bg-accent-soft px-4 py-3 text-sm text-[#7f4934]" role="alert">{error}</p>}
         {message && <p aria-live="polite" className="mt-4 rounded-xl bg-forest-soft px-4 py-3 text-sm text-forest">{message}</p>}
-        {stage === "selection" && <button className="mt-6 min-h-12 rounded-full bg-forest px-6 text-sm font-medium text-white disabled:opacity-50" disabled={!canContinue} onClick={() => { setError(""); setStage("identity"); }} type="button">Continue</button>}
+        {stage === "selection" && <button className="mt-6 min-h-12 rounded-full bg-forest px-6 text-sm font-medium text-white disabled:opacity-50" disabled={!canContinue} onClick={() => { setError(""); setStage("identity"); }} type="button">{t("Continue")}</button>}
       </section>
-      <aside className="h-fit rounded-3xl bg-[#f0eee7] p-6 sm:p-8" aria-label="Booking summary">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Your selection</p>
+      <aside className="h-fit rounded-3xl bg-[#f0eee7] p-6 sm:p-8" aria-label={t("Booking summary")}>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">{t("Your selection")}</p>
         <h2 className="mt-2 text-xl font-medium tracking-tight text-ink">{options.workspace.name}</h2>
         <dl className="mt-5 grid gap-3 text-sm">
-          <div><dt className="text-xs text-muted">Professional</dt><dd className="mt-0.5 text-ink">{selectedProfessional?.name ?? "Not selected"}</dd></div>
-          <div><dt className="text-xs text-muted">Services</dt><dd className="mt-0.5 text-ink">{selectedServices.length ? selectedServices.map((service) => service.name).join(", ") : "Not selected"}</dd></div>
-          <div><dt className="text-xs text-muted">Date and time</dt><dd className="mt-0.5 text-ink">{selection.date}{selection.time ? ` · ${selection.time}` : " · Choose a time"}</dd></div>
-          {durationMinutes > 0 && selectedServices.length > 0 && <div><dt className="text-xs text-muted">Duration and total</dt><dd className="mt-0.5 text-ink">{durationMinutes} min · {(priceMinorUnits / 100).toFixed(2)}</dd></div>}
+          <div><dt className="text-xs text-muted">{t("Professional")}</dt><dd className="mt-0.5 text-ink">{selectedProfessional?.name ?? t("Not selected")}</dd></div>
+          <div><dt className="text-xs text-muted">{t("Services")}</dt><dd className="mt-0.5 text-ink">{selectedServices.length ? selectedServices.map((service) => service.name).join(", ") : t("Not selected")}</dd></div>
+          <div><dt className="text-xs text-muted">{t("Date and time")}</dt><dd className="mt-0.5 text-ink">{displayDate}{selection.time ? ` · ${selection.time}` : ` · ${t("Choose a time")}`}</dd></div>
+          {durationMinutes > 0 && selectedServices.length > 0 && <div><dt className="text-xs text-muted">{t("Duration and total")}</dt><dd className="mt-0.5 text-ink">{formatNumber(durationMinutes, locale)} {t("min")} · {formatNumber(priceMinorUnits / 100, locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</dd></div>}
         </dl>
-        {stage !== "selection" && stage !== "complete" && <button className="mt-6 min-h-10 text-sm text-forest underline underline-offset-4" onClick={() => { setStage("selection"); setClient(null); }} type="button">Back to choices</button>}
-        {stage === "identity" && <div className="mt-6"><ClientIdentification onReady={clientReady} tenantId={tenantId} />{client && <button className="mt-4 min-h-12 w-full rounded-full bg-forest px-5 text-sm font-medium text-white" onClick={() => setStage("confirm")} type="button">Continue to confirmation</button>}</div>}
-        {stage === "confirm" && client && <div className="mt-6 rounded-2xl border border-line bg-white p-5"><p className="text-sm text-muted">Booking for</p><p className="mt-1 font-medium text-ink">{client.name}</p><p className="mt-3 text-sm text-muted">{selectedProfessional?.name} · {selectedServices.map((service) => service.name).join(", ")}</p><p className="mt-1 text-sm text-ink">{selection.date} at {selection.time} ({options.workspace.timeZone})</p><button className="mt-5 min-h-12 w-full rounded-full bg-forest px-5 text-sm font-medium text-white disabled:opacity-60" disabled={bookingBusy} onClick={() => void confirmBooking()} type="button">{bookingBusy ? "Confirming…" : "Confirm appointment"}</button></div>}
+        {stage !== "selection" && stage !== "complete" && <button className="mt-6 min-h-10 text-sm text-forest underline underline-offset-4" onClick={() => { setStage("selection"); setClient(null); }} type="button">{t("Back to choices")}</button>}
+        {stage === "identity" && <div className="mt-6"><ClientIdentification onReady={clientReady} tenantId={tenantId} />{client && <button className="mt-4 min-h-12 w-full rounded-full bg-forest px-5 text-sm font-medium text-white" onClick={() => setStage("confirm")} type="button">{t("Continue to confirmation")}</button>}</div>}
+        {stage === "confirm" && client && <div className="mt-6 rounded-2xl border border-line bg-white p-5"><p className="text-sm text-muted">{t("Booking for")}</p><p className="mt-1 font-medium text-ink">{client.name}</p><p className="mt-3 text-sm text-muted">{selectedProfessional?.name} · {selectedServices.map((service) => service.name).join(", ")}</p><p className="mt-1 text-sm text-ink">{displayDate} · {selection.time} ({options.workspace.timeZone})</p><button className="mt-5 min-h-12 w-full rounded-full bg-forest px-5 text-sm font-medium text-white disabled:opacity-60" disabled={bookingBusy} onClick={() => void confirmBooking()} type="button">{bookingBusy ? t("Confirming…") : t("Confirm appointment")}</button></div>}
       </aside>
     </div>
   );
