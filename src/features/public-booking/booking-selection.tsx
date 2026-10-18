@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ClientIdentification } from "@/features/public-booking/client-identification";
 import { BookingConfirmation, type PublicBookingConfirmation } from "@/features/public-booking/booking-confirmation";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { translate } from "@/lib/i18n/messages";
+import { useLanguage } from "../i18n/language-provider";
 
 type Service = { id: string; name: string; durationMinutes: number; priceMinorUnits: number };
 type Professional = { id: string; name: string; serviceIds: string[] };
@@ -18,6 +21,7 @@ function localToday(timeZone: string) {
 }
 
 export function BookingSelection({ tenantId, options }: { tenantId: string; options: Options }) {
+  const { locale } = useLanguage();
   const today = useMemo(() => localToday(options.workspace.timeZone), [options.workspace.timeZone]);
   const [selection, setSelection] = useState<Selection>({ professionalId: "", serviceIds: [], date: today, time: "" });
   const [hydrated, setHydrated] = useState(false);
@@ -36,24 +40,24 @@ export function BookingSelection({ tenantId, options }: { tenantId: string; opti
 
   useEffect(() => {
     queueMicrotask(() => {
-    try {
-      const saved = sessionStorage.getItem(selectionKey);
-      if (saved) {
-        const value: unknown = JSON.parse(saved);
-        if (typeof value === "object" && value !== null) {
-          const candidate = value as Partial<Selection>;
-          if (typeof candidate.professionalId === "string" && Array.isArray(candidate.serviceIds) && typeof candidate.date === "string") {
-            setSelection({
-              professionalId: candidate.professionalId,
-              serviceIds: candidate.serviceIds.filter((id): id is string => typeof id === "string"),
-              date: candidate.date,
-              time: typeof candidate.time === "string" ? candidate.time : "",
-            });
+      try {
+        const saved = sessionStorage.getItem(selectionKey);
+        if (saved) {
+          const value: unknown = JSON.parse(saved);
+          if (typeof value === "object" && value !== null) {
+            const candidate = value as Partial<Selection>;
+            if (typeof candidate.professionalId === "string" && Array.isArray(candidate.serviceIds) && typeof candidate.date === "string") {
+              setSelection({
+                professionalId: candidate.professionalId,
+                serviceIds: candidate.serviceIds.filter((id): id is string => typeof id === "string"),
+                date: candidate.date,
+                time: typeof candidate.time === "string" ? candidate.time : "",
+              });
+            }
           }
         }
-      }
-    } catch { /* Invalid browser state is discarded. */ }
-    setHydrated(true);
+      } catch { /* Invalid browser state is discarded. */ }
+      setHydrated(true);
     });
   }, []);
 
@@ -150,10 +154,21 @@ export function BookingSelection({ tenantId, options }: { tenantId: string; opti
           <p className="mt-6 rounded-2xl bg-[#f4f5f0] p-5 text-sm text-muted">This workspace has no bookable services or professionals at the moment. Please check again later.</p>
         ) : (
           <div className="mt-6 grid gap-5">
-            <label className="grid gap-2 text-xs font-medium text-ink" htmlFor="booking-professional">Professional
-              <select className="min-h-12 rounded-xl border border-line bg-[#fbfcf9] px-4 text-sm" id="booking-professional" onChange={(event) => setSelection((current) => ({ ...current, professionalId: event.target.value, time: "" }))} value={selection.professionalId}>
-                <option value="">Choose a professional</option>{options.professionals.map((professional) => <option key={professional.id} value={professional.id}>{professional.name}</option>)}
-              </select>
+            <label className="grid gap-2 text-xs font-medium text-ink" htmlFor="booking-professional">
+              Professional
+              
+              <Select
+                items={options.professionals.map((professional) => ({ value: professional.id, label: professional.name }))}
+                onValueChange={(value : string | null) => setSelection((current) => ({ ...current, professionalId: value!, time: "" }))}
+              >
+                <SelectTrigger className="h-20 w-full bg-white">
+                  <SelectValue placeholder={translate(locale, "Choose a professional")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {options.professionals.map((professional) => <SelectItem key={professional.id} value={professional.id}>{professional.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+
             </label>
             <fieldset className="grid gap-2">
               <legend className="text-xs font-medium text-ink">Services</legend>
