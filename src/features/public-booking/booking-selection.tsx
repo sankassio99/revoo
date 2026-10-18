@@ -6,6 +6,8 @@ import { BookingConfirmation, type PublicBookingConfirmation } from "@/features/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { translate } from "@/lib/i18n/messages";
 import { useLanguage } from "../i18n/language-provider";
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ChevronDownIcon } from "lucide-react";
 
 type Service = { id: string; name: string; durationMinutes: number; priceMinorUnits: number };
 type Professional = { id: string; name: string; serviceIds: string[] };
@@ -156,12 +158,12 @@ export function BookingSelection({ tenantId, options }: { tenantId: string; opti
           <div className="mt-6 grid gap-5">
             <label className="grid gap-2 text-xs font-medium text-ink" htmlFor="booking-professional">
               Professional
-              
+
               <Select
                 items={options.professionals.map((professional) => ({ value: professional.id, label: professional.name }))}
-                onValueChange={(value : string | null) => setSelection((current) => ({ ...current, professionalId: value!, time: "" }))}
+                onValueChange={(value: string | null) => setSelection((current) => ({ ...current, professionalId: value!, time: "" }))}
               >
-                <SelectTrigger className="h-20 w-full bg-white">
+                <SelectTrigger className="min-h-12 w-full bg-white">
                   <SelectValue placeholder={translate(locale, "Choose a professional")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -170,18 +172,41 @@ export function BookingSelection({ tenantId, options }: { tenantId: string; opti
               </Select>
 
             </label>
-            <fieldset className="grid gap-2">
-              <legend className="text-xs font-medium text-ink">Services</legend>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {options.services.map((service) => {
-                  const compatible = !selectedProfessional || selectedProfessional.serviceIds.includes(service.id);
-                  return <label className={`flex min-h-14 items-center gap-3 rounded-xl border px-4 py-3 text-sm ${compatible ? "border-line bg-[#fbfcf9]" : "border-line/60 bg-[#f5f5f1] text-muted"}`} key={service.id}>
-                    <input checked={selection.serviceIds.includes(service.id)} disabled={!compatible} onChange={() => toggleService(service.id)} type="checkbox" />
-                    <span className="flex-1">{service.name}<span className="block text-xs text-muted">{service.durationMinutes} min · {(service.priceMinorUnits / 100).toFixed(2)}</span></span>
-                  </label>;
-                })}
-              </div>
-            </fieldset>
+
+            <div className="grid gap-2">
+              <span className="text-xs font-medium text-ink" id="booking-services-label">Services</span>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  aria-labelledby="booking-services-label"
+                  className="flex min-h-12 w-full items-center justify-between rounded-xl border border-line bg-white px-4 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-forest/40"
+                >
+                  <span className={selectedServices.length ? "text-ink" : "text-muted"}>
+                    {selectedServices.length ? selectedServices.map((service) => service.name).join(", ") : translate(locale, "Choose services")}
+                  </span>
+                  <ChevronDownIcon className="size-4 shrink-0 text-muted" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-(--anchor-width) min-w-64">
+                  {options.services.map((service) => {
+                    const compatible = !selectedProfessional || selectedProfessional.serviceIds.includes(service.id);
+                    return (
+                      <DropdownMenuCheckboxItem
+                        checked={selection.serviceIds.includes(service.id)}
+                        closeOnClick={false}
+                        disabled={!compatible}
+                        key={service.id}
+                        onCheckedChange={() => toggleService(service.id)}
+                      >
+                        <span className="flex-1">
+                          {service.name}
+                          <span className="block text-xs text-muted">{service.durationMinutes} min · {(service.priceMinorUnits / 100).toFixed(2)}</span>
+                        </span>
+                      </DropdownMenuCheckboxItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
             <label className="grid max-w-xs gap-2 text-xs font-medium text-ink" htmlFor="booking-date">Date
               <input className="min-h-12 rounded-xl border border-line bg-[#fbfcf9] px-4 text-sm" id="booking-date" min={today} onChange={(event) => setSelection((current) => ({ ...current, date: event.target.value, time: "" }))} type="date" value={selection.date} />
             </label>
