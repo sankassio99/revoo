@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MoreHorizontalIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -31,6 +32,8 @@ export type CalendarAppointment = {
   id: string;
   customerId: string;
   customerName: string;
+  customerEmail: string;
+  customerPhone: string;
   serviceName: string;
   professionalName: string;
   startAt: string;
@@ -258,7 +261,21 @@ export function AppointmentCalendar({
                   {appointment.localTime}
                 </time>
                 <div className="min-w-0">
-                  <h3 className="truncate text-sm font-medium text-ink">{appointment.customerName}</h3>
+                  <h3 className="truncate text-sm font-medium text-ink">
+                    <Link className="hover:text-forest hover:underline" href={`/workspace/customers/${appointment.customerId}`}>
+                      {appointment.customerName}
+                    </Link>
+                  </h3>
+                  {(appointment.customerEmail || appointment.customerPhone) && (
+                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
+                      {appointment.customerEmail && (
+                        <span>{translate(locale, "Email")}: <a className="hover:text-forest hover:underline" href={`mailto:${appointment.customerEmail}`}>{appointment.customerEmail}</a></span>
+                      )}
+                      {appointment.customerPhone && (
+                        <span>{translate(locale, "Phone")}: <a className="hover:text-forest hover:underline" href={`tel:${appointment.customerPhone}`}>{appointment.customerPhone}</a></span>
+                      )}
+                    </div>
+                  )}
                   <p className="mt-1 truncate text-xs text-muted">
                     {appointment.serviceName} <span className="px-1 text-line">·</span> {appointment.professionalName}
                   </p>

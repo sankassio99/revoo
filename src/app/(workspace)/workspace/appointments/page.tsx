@@ -77,6 +77,8 @@ export default async function AppointmentsPage({ searchParams }: PageProps) {
     id: appointment.id,
     customerId: appointment.customerId,
     customerName: appointment.customerName,
+    customerEmail: appointment.customerEmail,
+    customerPhone: appointment.customerPhone,
     serviceName: appointment.serviceName,
     professionalName: professionalsById.get(appointment.professionalId) ?? translate(locale, "Team member"),
     startAt: appointment.startAt.toISOString(),

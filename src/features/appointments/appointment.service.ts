@@ -411,7 +411,11 @@ export async function listAppointments(
           ),
         )
       : [];
-  const customerNames = new Map(customers.map((customer) => [customer.id, customer.get("name")]));
+  const customerDetails = new Map(customers.map((customer) => [customer.id, {
+    name: customer.get("name"),
+    email: customer.get("email"),
+    phone: customer.get("phone"),
+  }]));
 
   return appointments.docs.map((appointment) => {
     const data = appointment.data();
@@ -419,9 +423,17 @@ export async function listAppointments(
       id: appointment.id,
       customerId: data.customerId,
       customerName:
-        typeof customerNames.get(data.customerId) === "string"
-          ? customerNames.get(data.customerId)
+        typeof customerDetails.get(data.customerId)?.name === "string"
+          ? customerDetails.get(data.customerId)?.name
           : "Customer",
+      customerEmail:
+        typeof customerDetails.get(data.customerId)?.email === "string"
+          ? customerDetails.get(data.customerId)?.email
+          : "",
+      customerPhone:
+        typeof customerDetails.get(data.customerId)?.phone === "string"
+          ? customerDetails.get(data.customerId)?.phone
+          : "",
       serviceId: data.serviceId,
       serviceName: data.serviceSnapshot?.name ?? "Appointment",
       professionalId: data.professionalId,
