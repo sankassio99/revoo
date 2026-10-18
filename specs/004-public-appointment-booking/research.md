@@ -13,22 +13,22 @@
 - Allow unauthenticated Firestore reads of tenant catalog and schedule data: rejected because rules would expose whole tenant records and bypass response-field filtering.
 - Reuse staff routes with a public bypass: rejected because it weakens a well-defined staff authorization boundary.
 
-## Decision 2: Verify client email before matching a customer record
+## Decision 2: Match the provided email without a verification code
 
-**Decision**: Use Firebase Authentication email-link sign-in for the public client flow. Require a verified Firebase identity before customer lookup or booking. Return the same initial message for any syntactically valid email, then determine whether registration is needed after verification.
+**Decision**: Ask for an email address and check it directly against the selected workspace's customer email index. Do not send a code or sign-in link and do not require a Firebase session for lookup, registration, or appointment creation.
 
-**Rationale**: The feature must associate bookings with CRM customer records without exposing customer existence to arbitrary visitors. Passwordless verification is appropriate for an email-first public booking flow and avoids asking returning clients to create a password. The app already uses Firebase Authentication and rejects unverified users when establishing sessions, although the current staff sign-in UI uses email/password.
+**Rationale**: The requested booking experience should identify clients with a simple database lookup and avoid a verification-code round trip. The API still performs the lookup server-side and confines it to the workspace in the route.
 
 **Alternatives considered**:
-- Reveal whether a customer record exists immediately after email entry: rejected because it permits account enumeration.
+- Email-link verification: rejected to keep the requested flow simple.
 - Require a new password for every booker: rejected because it adds friction and is unnecessary for a single booking flow.
-- Accept the email without proof of ownership: rejected because an attacker could book against another customer's record.
+- Email ownership verification: intentionally omitted; an email match identifies a record but does not prove control of that email.
 
-**Integration constraint**: Email-link authentication needs the production and emulator action settings, authorized return URL, and pending-booking state restoration. Do not disclose a customer match until the link is completed and the verified session is established.
+**Integration constraint**: Client lookup, registration, and appointment creation use a normalized email supplied in the request. Tenant scoping, duplicate-match handling, and final transactional revalidation remain required.
 
 ## Decision 3: Match customer records by a normalized email identity and reject ambiguous matches
 
-**Decision**: Normalize verified email by trimming and lowercasing, then derive a SHA-256 key for a tenant-scoped customer-email index. Store the customer ID in the index, not the raw email or its normalized form. Existing customer records must be indexed before public booking is enabled; if a workspace contains duplicate matching records, do not choose one automatically and return a safe resolution error.
+**Decision**: Normalize the provided email by trimming and lowercasing, then derive a SHA-256 key for a tenant-scoped customer-email index. Store the customer ID in the index, not the raw email or its normalized form. Existing customer records must be indexed before public booking is enabled; if a workspace contains duplicate matching records, do not choose one automatically and return a safe resolution error.
 
 **Rationale**: Current customer records store email but do not normalize it or provide an email lookup path. A dedicated tenant-scoped lookup prevents case-variant misses and avoids scanning an unbounded customer collection. Hashing the normalized lookup key avoids duplicating customer email in a second Firestore field. Ambiguous identities must not silently merge customer histories.
 
@@ -52,7 +52,7 @@
 
 ## Decision 5: Final appointment creation reuses the schedule-guard transaction invariant
 
-**Decision**: Share the existing appointment validation and conflict-guard behavior for public creation. The server derives the customer identity from the verified session and the service duration/prices from current tenant records; it ignores client-submitted customer IDs and calculated totals. Preserve per-service name, duration, and price snapshots in addition to the appointment's aggregate duration and price.
+**Decision**: Share the existing appointment validation and conflict-guard behavior for public creation. The server resolves the customer from the provided email index and derives service duration/prices from current tenant records; it ignores client-submitted customer IDs and calculated totals. Preserve per-service name, duration, and price snapshots in addition to the appointment's aggregate duration and price.
 
 **Rationale**: Existing appointment creation checks active customer/service/professional records, operating hours, service snapshots, and conflicts while using a per-professional schedule guard in a Firestore transaction. The public path needs the same business invariants but cannot call the staff-only creation function without workspace membership. Per-service snapshots let the confirmation list the selected services and preserve exactly what was booked if catalog entries change later.
 

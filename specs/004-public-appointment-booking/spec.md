@@ -68,8 +68,8 @@ A client submits the booking for their selected time. The system checks availabi
 - **FR-003**: The page MUST show available times for a selected professional and date, accounting for working hours, existing appointments, and the duration of the selected services.
 - **FR-004**: The page MUST identify the workspace time zone when displaying dates and times.
 - **FR-005**: Clients MUST provide a valid email address to continue to client identification.
-- **FR-006**: The experience MUST distinguish existing-client and new-client paths without revealing account details to an unverified visitor.
-- **FR-007**: Before displaying existing-client account information or associating an appointment with that account, the experience MUST verify the client’s control of the email address.
+- **FR-006**: The experience MUST distinguish existing-client and new-client paths by checking whether the provided email matches a client record in the selected workspace.
+- **FR-007**: The experience MUST NOT require an email code, sign-in link, or authenticated session to check the provided email against the workspace's client records.
 - **FR-008**: New clients MUST be able to complete registration before proceeding to booking.
 - **FR-009**: Successful identification or registration MUST preserve the selected professional, services, date, and time.
 - **FR-010**: Before creating an appointment, the system MUST check that the selected time remains available.
@@ -101,7 +101,7 @@ A client submits the booking for their selected time. The system checks availabi
 
 - The public page is associated with one workspace and follows that workspace’s configured time zone and booking rules.
 - Multiple services may be selected; the appointment duration is based on their combined duration.
-- Email ownership must be verified before a booking is associated with an existing client account or private client details are shown.
+- Email matching identifies the client record but does not prove ownership of that email address; the public booking flow accepts the provided email without a code.
 - New-client registration collects the information necessary to create a client record; additional profile fields are not specified here.
 - Appointment cancellation, rescheduling, payment, and outbound confirmation messages are outside this feature’s scope.
 

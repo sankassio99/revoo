@@ -11,6 +11,7 @@ import {
   customerUpdateSchema,
   type CommunicationPreferences,
 } from "@/features/customers/customer.schema";
+import { customerEmailIndexKey, normalizeCustomerEmail } from "@/features/customers/customer-email-index";
 
 export type CustomerRecord = {
   id: string;
@@ -135,7 +136,7 @@ export async function createCustomer(
     communicationPreferences,
     parsed.data.consentMethod ?? "other",
   );
-  await customer.create({
+  const record = {
     name,
     phone,
     phoneNormalized,
@@ -149,6 +150,19 @@ export async function createCustomer(
     createdBy: user.uid,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
+  };
+  const email = parsed.data.email ? normalizeCustomerEmail(parsed.data.email) : null;
+  await adminDb.runTransaction(async (transaction) => {
+    const index = email
+      ? adminDb.doc(`tenants/${tenantId}/customerEmailIndex/${customerEmailIndexKey(email)}`)
+      : null;
+    const indexSnapshot = index ? await transaction.get(index) : null;
+    transaction.create(customer, record);
+    if (index && indexSnapshot) {
+      transaction.set(index, indexSnapshot.exists
+        ? { status: "ambiguous", updatedAt: FieldValue.serverTimestamp() }
+        : { status: "active", customerId: customer.id, updatedAt: FieldValue.serverTimestamp() });
+    }
   });
 
   return { id: customer.id, possibleDuplicate };
@@ -216,7 +230,7 @@ export async function updateCustomer(
         parsed.data.consentMethod ?? "other",
       )
     : [];
-  await customer.update({
+  const update = {
     ...(parsed.data.name !== undefined ? { name } : {}),
     ...(parsed.data.phone !== undefined ? { phone } : {}),
     ...(parsed.data.email !== undefined ? { email: parsed.data.email || null } : {}),
@@ -233,6 +247,40 @@ export async function updateCustomer(
         }
       : {}),
     updatedAt: FieldValue.serverTimestamp(),
+  };
+  await adminDb.runTransaction(async (transaction) => {
+    const current = await transaction.get(customer);
+    if (!current.exists || current.get("isArchived") === true || current.get("archivedAt") !== undefined) {
+      throw new Error("Customer not found.");
+    }
+    const oldEmail = typeof current.get("email") === "string"
+      ? normalizeCustomerEmail(current.get("email") as string)
+      : null;
+    const newEmail = parsed.data.email !== undefined && parsed.data.email
+      ? normalizeCustomerEmail(parsed.data.email)
+      : parsed.data.email === "" ? null : oldEmail;
+    const oldIndex = oldEmail
+      ? adminDb.doc(`tenants/${tenantId}/customerEmailIndex/${customerEmailIndexKey(oldEmail)}`)
+      : null;
+    const newIndex = newEmail
+      ? adminDb.doc(`tenants/${tenantId}/customerEmailIndex/${customerEmailIndexKey(newEmail)}`)
+      : null;
+    const refs = [...new Set([oldIndex, newIndex].filter((ref): ref is FirebaseFirestore.DocumentReference => ref !== null))];
+    const snapshots = await Promise.all(refs.map((ref) => transaction.get(ref)));
+    const byPath = new Map(refs.map((ref, index) => [ref.path, snapshots[index]]));
+    transaction.update(customer, update);
+    if (oldIndex && oldEmail !== newEmail) {
+      const oldSnapshot = byPath.get(oldIndex.path);
+      if (oldSnapshot?.exists && oldSnapshot.get("customerId") === customerId) {
+        transaction.delete(oldIndex);
+      }
+    }
+    if (newIndex && newEmail !== oldEmail) {
+      const newSnapshot = byPath.get(newIndex.path);
+      transaction.set(newIndex, newSnapshot?.exists
+        ? { status: "ambiguous", updatedAt: FieldValue.serverTimestamp() }
+        : { status: "active", customerId, updatedAt: FieldValue.serverTimestamp() });
+    }
   });
 
   return { possibleDuplicate };
@@ -298,11 +346,23 @@ export async function archiveCustomer(
     return false;
   }
 
-  await customer.update({
-    archivedAt: FieldValue.serverTimestamp(),
-    isArchived: true,
-    archivedBy: user.uid,
-    updatedAt: FieldValue.serverTimestamp(),
+  await adminDb.runTransaction(async (transaction) => {
+    const current = await transaction.get(customer);
+    if (!current.exists || current.get("isArchived") === true || current.get("archivedAt") !== undefined) return;
+    const email = typeof current.get("email") === "string" ? normalizeCustomerEmail(current.get("email") as string) : null;
+    const index = email
+      ? adminDb.doc(`tenants/${tenantId}/customerEmailIndex/${customerEmailIndexKey(email)}`)
+      : null;
+    const indexSnapshot = index ? await transaction.get(index) : null;
+    transaction.update(customer, {
+      archivedAt: FieldValue.serverTimestamp(),
+      isArchived: true,
+      archivedBy: user.uid,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    if (index && indexSnapshot?.exists && indexSnapshot.get("customerId") === customerId) {
+      transaction.delete(index);
+    }
   });
   return true;
 }

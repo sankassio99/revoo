@@ -36,17 +36,15 @@ Professionals share workspace operating hours in this version. Individual profes
 | `priceMinorUnits` | Current service price | Must be a nonnegative safe integer; sum for display and snapshot |
 | `status` | Booking eligibility | Must remain `active` at final booking |
 
-## Verified client identity
+## Public booking email
 
-**Source**: Firebase Authentication verified identity
+**Source**: Email supplied by the visitor and checked against the workspace customer index
 
 | Field | Meaning | Validation / behavior |
 |---|---|---|
-| `uid` | Authenticated Firebase identity | Derived only from a verified server session; never accepted from client request data |
-| `email` | Verified email address | Required; normalize with trim and lowercase before matching or indexing |
-| `emailVerified` | Proof that the client controls the email | Must be `true` before customer lookup or appointment creation |
+| `email` | Client email address | Required; validate and normalize with trim and lowercase before matching or indexing; control of the address is not verified |
 
-The client identity is separate from staff membership. A verified client does not gain workspace-member privileges.
+The public booking email does not create an authenticated user or grant workspace-member privileges.
 
 ## Customer
 
@@ -56,7 +54,7 @@ The client identity is separate from staff membership. A verified client does no
 |---|---|---|
 | `name` | Client's display name | Required for a newly registered client; trim and validate to 2–120 characters |
 | `phone` | Client contact number | Required for registration; trim to 7–24 characters and require at least seven digits after removing non-digits |
-| `email` | Client's contact email | Equal to the verified identity email for public registration; trimmed, valid, and at most 254 characters |
+| `email` | Client's contact email | Equal to the provided email for public registration; trimmed, valid, and at most 254 characters |
 | `isArchived` / `archivedAt` | Customer eligibility | Archived clients cannot make a new booking |
 | `communicationPreferences` | Consent-aware communications state | New public registrations default all unspecified preferences to `unknown`; marketing consent is not implied |
 
@@ -68,14 +66,14 @@ Lookup is scoped to the workspace. A single active matching record is used. No m
 
 | Field | Meaning | Validation / behavior |
 |---|---|---|
-| `customerId` | Resolved or newly registered client record | Resolved server-side from the verified email; not accepted as an authoritative public input |
+| `customerId` | Resolved or newly registered client record | Resolved server-side from the provided email; not accepted as an authoritative public input |
 | `professionalId` | Selected professional | Must still exist, be active, and be assigned all selected services |
 | `serviceIds` | Selected services | Unique, non-empty set of currently active services belonging to this workspace |
 | `startAtUtc`, `endAtUtc` | Stored appointment interval | Derive from requested local date/time in workspace time zone and current aggregate service duration |
 | `timeZoneAtBooking` | Time zone applied during booking | Snapshot of workspace setting at booking time |
 | `serviceSnapshot` | Per-service names, durations, and prices plus aggregate duration and total price as booked | Derive from current service records in final transaction; preserve against future catalog edits |
 | `status` | Appointment lifecycle state | New booking is `Scheduled` |
-| `createdBy` | Audit identity | Verified Firebase client UID for a public booking |
+| `createdBy` | Audit identity | `public-booking` for a booking submitted through the unauthenticated public flow |
 | `createdAt`, `updatedAt`, `changeHistory` | Audit metadata | Server-generated |
 
 ## Availability result
@@ -99,10 +97,10 @@ The index associates one normalized email with one active customer ID to make ex
 ## State transitions
 
 1. `selection` → client has workspace, professional, services, and date/time.
-2. `verification_pending` → an email sign-in link has been sent; no customer existence is disclosed.
-3. `verified_existing_client` → verified identity resolves to one active customer.
-4. `registration_required` → verified identity has no matching customer; collect name and phone.
+2. `email_lookup` → visitor enters an email and the server checks for a workspace-scoped match.
+3. `existing_client` → provided email resolves to one active customer.
+4. `registration_required` → provided email has no matching customer; collect name and phone.
 5. `ready_to_confirm` → identity/customer and selection are valid.
 6. `confirmed` → final transaction succeeds and creates one scheduled appointment.
 7. `slot_unavailable` → final validation rejects a conflict; return to time selection while preserving other selections.
-8. `identity_or_registration_error` → verification or registration fails; show a safe error and retain recoverable selection state.
+8. `identity_or_registration_error` → email lookup or registration fails; show an error and retain recoverable selection state.
