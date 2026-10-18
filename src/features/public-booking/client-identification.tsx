@@ -77,18 +77,20 @@ export function ClientIdentification({
           <label className="grid gap-1.5 text-xs font-medium text-ink" htmlFor="booking-email">Email address
             <input autoComplete="email" className="min-h-12 rounded-xl border border-line bg-[#fbfcf9] px-4 text-sm" id="booking-email" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} />
           </label>
-          <button className="mt-auto min-h-12 rounded-full bg-forest px-5 text-sm font-medium text-white disabled:opacity-60" disabled={busy} type="submit">{busy ? "Checking…" : "Continue with email"}</button>
+          <button className="mt-auto min-h-12 rounded-full bg-forest px-5 text-sm font-medium text-white disabled:opacity-60" disabled={busy} type="submit">{busy ? "Checking…" : "Continue"}</button>
         </form>
       )}
       {registrationRequired && (
         <form className="mt-5 grid gap-4 sm:grid-cols-2" onSubmit={register}>
           <p className="text-sm text-muted sm:col-span-2">Email: <span className="font-medium text-ink">{email}</span></p>
-          <label className="grid gap-1.5 text-xs font-medium text-ink" htmlFor="client-name">Name
-            <input autoComplete="name" className="min-h-12 rounded-xl border border-line bg-[#fbfcf9] px-4 text-sm" id="client-name" maxLength={120} minLength={2} onChange={(event) => setName(event.target.value)} required value={name} />
-          </label>
-          <label className="grid gap-1.5 text-xs font-medium text-ink" htmlFor="client-phone">Phone
-            <input autoComplete="tel" className="min-h-12 rounded-xl border border-line bg-[#fbfcf9] px-4 text-sm" id="client-phone" maxLength={24} minLength={7} onChange={(event) => setPhone(event.target.value)} required type="tel" value={phone} />
-          </label>
+          <div className="grid gap-4 sm:col-span-2">
+            <label className="grid gap-1.5 text-xs font-medium text-ink" htmlFor="client-name">Name
+              <input autoComplete="name" className="min-h-12 rounded-xl border border-line bg-[#fbfcf9] px-4 text-sm" id="client-name" maxLength={120} minLength={2} onChange={(event) => setName(event.target.value)} required value={name} />
+            </label>
+            <label className="grid gap-1.5 text-xs font-medium text-ink" htmlFor="client-phone">Phone
+              <input autoComplete="tel" className="min-h-12 rounded-xl border border-line bg-[#fbfcf9] px-4 text-sm" id="client-phone" maxLength={24} minLength={7} onChange={(event) => setPhone(event.target.value)} required type="tel" value={phone} />
+            </label>
+          </div>
           <button className="min-h-12 rounded-full bg-forest px-5 text-sm font-medium text-white disabled:opacity-60 sm:col-span-2" disabled={busy} type="submit">{busy ? "Saving…" : "Save and continue"}</button>
         </form>
       )}
