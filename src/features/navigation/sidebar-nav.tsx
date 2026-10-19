@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
   CaretDown,
+  Globe,
 } from "@phosphor-icons/react";
 import {
   SidebarGroup,
@@ -25,7 +26,7 @@ import { resolveNavigation } from "@/features/navigation/navigation-match";
 import { useLanguage } from "@/features/i18n/language-provider";
 import { translate } from "@/lib/i18n/messages";
 
-export function SidebarNav() {
+export function SidebarNav({ tenantId }: { tenantId: string | null }) {
   const pathname = usePathname();
   const { locale } = useLanguage();
   const match = resolveNavigation(pathname);
@@ -137,6 +138,23 @@ export function SidebarNav() {
               </SidebarMenuItem>
             );
           })}
+          {tenantId && (
+            <SidebarMenuItem className="text-white">
+              <SidebarMenuButton
+                onClick={closeMobileNavigation}
+                render={
+                  <Link
+                    href={`/book/${encodeURIComponent(tenantId)}`}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  />
+                }
+              >
+                <Globe aria-hidden="true" size={18} />
+                <span>{translate(locale, "Public portal")}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
         </SidebarMenu>
       </SidebarGroup>
     </nav>
