@@ -9,7 +9,7 @@ export type BottomNavProps = { items: BottomNavItem[]; activeKey: string; static
 
 function BottomNav({ items, activeKey, static: isStatic = false, className }: BottomNavProps) {
   return (
-    <div className={cn(isStatic ? "relative px-4 pb-4" : "fixed inset-x-0 bottom-0 z-40 px-4 pb-[max(16px,env(safe-area-inset-bottom))]", className)}>
+    <div className={cn(isStatic ? "relative px-4 pb-4" : "fixed inset-x-0 bottom-0 z-40 px-4 md:hidden pb-[max(16px,env(safe-area-inset-bottom))]", className)}>
       <nav aria-label="Principal" className="mx-auto w-full max-w-md rounded-full bg-ink p-1.5">
         <ul className="flex items-center justify-between">
           {items.map(({ key, label, icon, href }) => {

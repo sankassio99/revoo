@@ -7,8 +7,11 @@ import { SignOutButton } from "@/features/auth/sign-out-button";
 import type { WorkspaceRole } from "@/lib/auth/authorization";
 import { MagneticLink } from "@/features/navigation/magnetic-link";
 import { MobileNav } from "@/features/navigation/mobile-nav";
+import { WorkspaceBottomNav } from "@/features/navigation/workspace-bottom-nav";
+import { IconCalendar, IconChartBar, IconHome, IconSettings, IconUsers } from "@tabler/icons-react";
 import { translate } from "@/lib/i18n/messages";
 import { getRequestLocale } from "@/lib/i18n/server";
+import { AppFrameTopbar } from "@/features/navigation/app-frame-topbar";
 import {
   Sidebar,
   SidebarContent,
@@ -89,38 +92,50 @@ export async function AppFrame({
       </Sidebar>
 
       <SidebarInset className="min-h-[100dvh] bg-paper">
-        <header className="sticky top-0 z-[1] border-b border-line/80 bg-paper/90 px-4 py-3 backdrop-blur-xl sm:px-7 lg:px-10">
-          <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-2 md:hidden">
-              <MobileNav />
-              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-forest text-white">
-                <Sparkle size={14} weight="fill" />
-              </span>
-              <span className="truncate text-sm font-semibold tracking-[-0.05em] text-forest">
+        <AppFrameTopbar>
+          <header className="sticky top-0 z-[1] border-b border-line/80 bg-paper/90 px-4 py-3 backdrop-blur-xl sm:px-7 lg:px-10">
+            <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2 md:hidden">
+                <MobileNav />
+                <span className="grid size-8 shrink-0 place-items-center rounded-full bg-forest text-white">
+                  <Sparkle size={14} weight="fill" />
+                </span>
+                <span className="truncate text-sm font-semibold tracking-[-0.05em] text-forest">
+                  {active?.name ?? translate(locale, "Your workspace")}
+                </span>
+              </div>
+              <div className="hidden text-xs text-muted md:block">
                 {active?.name ?? translate(locale, "Your workspace")}
-              </span>
+                <span className="mx-2 text-line">/</span>
+                {translate(locale, active?.role === "owner" ? "Owner workspace" : "Studio")}
+              </div>
+              <div className="flex items-center gap-2">
+                <MagneticLink
+                  className="group inline-flex min-h-10 items-center gap-2 rounded-full bg-forest px-4 text-xs font-medium text-white transition-colors hover:bg-[#20483b] active:scale-[0.98]"
+                  href="/workspace/appointments?new=1"
+                >
+                  <Plus size={15} weight="bold" />
+                  <span className="hidden sm:inline">{translate(locale, "New appointment")}</span>
+                  <span className="sm:hidden">{translate(locale, "Book")}</span>
+                </MagneticLink>
+              </div>
             </div>
-            <div className="hidden text-xs text-muted md:block">
-              {active?.name ?? translate(locale, "Your workspace")}
-              <span className="mx-2 text-line">/</span>
-              {translate(locale, active?.role === "owner" ? "Owner workspace" : "Studio")}
-            </div>
-            <div className="flex items-center gap-2">
-              <MagneticLink
-                className="group inline-flex min-h-10 items-center gap-2 rounded-full bg-forest px-4 text-xs font-medium text-white transition-colors hover:bg-[#20483b] active:scale-[0.98]"
-                href="/workspace/appointments?new=1"
-              >
-                <Plus size={15} weight="bold" />
-                <span className="hidden sm:inline">{translate(locale, "New appointment")}</span>
-                <span className="sm:hidden">{translate(locale, "Book")}</span>
-              </MagneticLink>
-            </div>
-          </div>
-        </header>
+          </header>
+        </AppFrameTopbar>
 
-        <div className="mx-auto w-full max-w-[1440px] px-4 pb-10 pt-7 sm:px-7 sm:pt-9 lg:px-10">
+        <div className="mx-auto w-full max-w-[1440px] px-4 pb-28 pt-7 sm:px-7 sm:pt-9 md:pb-10 lg:px-10">
           {children}
         </div>
+
+        <WorkspaceBottomNav
+          items={[
+            { key: "home", label: translate(locale, "Overview"), icon: <IconHome aria-hidden="true" stroke={1.5} />, href: "/workspace" },
+            { key: "calendar", label: translate(locale, "Appointments"), icon: <IconCalendar aria-hidden="true" stroke={1.5} />, href: "/workspace/appointments" },
+            { key: "customers", label: translate(locale, "Customers"), icon: <IconUsers aria-hidden="true" stroke={1.5} />, href: "/workspace/customers" },
+            { key: "reports", label: translate(locale, "Reports"), icon: <IconChartBar aria-hidden="true" stroke={1.5} />, href: "/workspace/reports" },
+            { key: "settings", label: translate(locale, "Settings"), icon: <IconSettings aria-hidden="true" stroke={1.5} />, href: "/workspace/settings" },
+          ]}
+        />
       </SidebarInset>
     </SidebarProvider>
   );
