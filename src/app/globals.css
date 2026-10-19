@@ -50,7 +50,7 @@
   --secondary: var(--surface);
   --secondary-foreground: var(--ink);
   --muted-foreground: #8a8a86;
-  --accent: var(--brand-soft);
+  --accent: var(--leaf);
   --accent-foreground: var(--brand-deep);
   --destructive: var(--danger);
   --border: var(--line);

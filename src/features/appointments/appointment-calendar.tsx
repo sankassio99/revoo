@@ -53,13 +53,13 @@ export type CalendarAppointment = {
 type UpdatePayload = Record<string, unknown>;
 
 const ALL_PROFESSIONALS = "__all__";
-const SERVICE_TONES = ["leaf", "brand", "sun"] as const;
-
-function toneFor(serviceName: string) {
-  let hash = 0;
-  for (const char of serviceName) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
-  return SERVICE_TONES[hash % SERVICE_TONES.length]!;
-}
+const STATUS_TONES: Record<CalendarAppointment["status"], keyof typeof solidTone> = {
+  Scheduled: "sun",
+  Confirmed: "leaf",
+  Completed: "brand",
+  Cancelled: "danger",
+  NoShow: "stone"
+};
 
 function AppointmentActions({
   appointment,
@@ -271,7 +271,7 @@ export function AppointmentCalendar({
           )}
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {items.map((appointment) => {
-              const tone = solidTone[toneFor(appointment.serviceName)];
+              const tone = solidTone[STATUS_TONES[appointment.status]];
               const dark = tone === solidTone.brand || tone === solidTone.ink;
               return (
                 <div className="min-w-0" key={appointment.id}>
