@@ -5,7 +5,7 @@ import { Toast as ToastPrimitive } from "@base-ui/react/toast"
 import { cn } from "cn"
 
 import { Button } from "@/components/ui/button"
-import { XIcon, CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
+import { IconX, IconCircleCheck, IconInfoCircle, IconAlertTriangle, IconCircleX, IconLoader2 } from "@tabler/icons-react"
 
 const toast = ToastPrimitive.createToastManager()
 
@@ -35,7 +35,7 @@ function Toast({ className, ...props }: ToastPrimitive.Root.Props) {
     <ToastPrimitive.Root
       data-slot="toast"
       className={cn(
-        "group/toast pointer-events-auto absolute right-0 bottom-0 z-[calc(1000-var(--toast-index))] w-full origin-bottom rounded-2xl border bg-popover text-popover-foreground shadow-lg will-change-transform outline-none select-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
+        "group/toast pointer-events-auto absolute right-0 bottom-0 z-[calc(1000-var(--toast-index))] w-full origin-bottom rounded-card border border-line bg-popover text-popover-foreground will-change-transform outline-none select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
         "[--gap:0.75rem] [--height:var(--toast-frontmost-height,var(--toast-height))] [--offset-y:calc(var(--toast-offset-y)*-1+calc(var(--toast-index)*var(--gap)*-1)+var(--toast-swipe-movement-y))] [--peek:0.75rem] [--scale:calc(max(0,1-(var(--toast-index)*0.1)))] [--shrink:calc(1-var(--scale))]",
         "h-(--height) [transform:translateX(var(--toast-swipe-movement-x))_translateY(calc(var(--toast-swipe-movement-y)-(var(--toast-index)*var(--peek))-(var(--shrink)*var(--height))))_scale(var(--scale))] [transition:transform_500ms_cubic-bezier(0.22,1,0.36,1),opacity_500ms,height_150ms]",
         "after:absolute after:top-full after:left-0 after:h-[calc(var(--gap)+1px)] after:w-full after:content-['']",
@@ -117,7 +117,7 @@ function ToastClose({
   return (
     <ToastPrimitive.Close
       data-slot="toast-close"
-      aria-label="Close toast"
+      aria-label="Fechar notificação"
       render={render}
       className={cn(
         "relative shrink-0 text-muted-foreground after:absolute after:-inset-2 after:content-[''] hover:text-foreground",
@@ -126,7 +126,7 @@ function ToastClose({
       {...props}
     >
       {children ?? (
-        <XIcon aria-hidden="true" />
+        <IconX aria-hidden="true" stroke={1.5} />
       )}
     </ToastPrimitive.Close>
   )
@@ -137,31 +137,31 @@ function ToastIcon({ type }: { type: string | undefined }) {
 
   if (type === "success") {
     icon = (
-      <CircleCheckIcon aria-hidden="true" />
+      <IconCircleCheck aria-hidden="true" stroke={1.5} />
     )
   }
 
   if (type === "info") {
     icon = (
-      <InfoIcon aria-hidden="true" />
+      <IconInfoCircle aria-hidden="true" stroke={1.5} />
     )
   }
 
   if (type === "warning") {
     icon = (
-      <TriangleAlertIcon aria-hidden="true" />
+      <IconAlertTriangle aria-hidden="true" stroke={1.5} />
     )
   }
 
   if (type === "error") {
     icon = (
-      <OctagonXIcon className="text-destructive" aria-hidden="true" />
+      <IconCircleX className="text-destructive" aria-hidden="true" stroke={1.5} />
     )
   }
 
   if (type === "loading") {
     icon = (
-      <Loader2Icon className="animate-spin" aria-hidden="true" />
+      <IconLoader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" stroke={1.5} />
     )
   }
 

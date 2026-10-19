@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "1mb",
     },
+    optimizePackageImports: ["@tabler/icons-react"],
   },
   allowedDevOrigins: ['187.126.0.174'],
 };
