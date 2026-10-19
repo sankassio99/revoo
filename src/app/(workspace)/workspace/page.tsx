@@ -1,6 +1,12 @@
 import Link from "next/link";
-import { ArrowRight, CalendarBlank, Clock, UserPlus, UsersThree } from "@phosphor-icons/react/dist/ssr";
-import { PresenceDot } from "@/features/navigation/presence-dot";
+import { ArrowRight, CalendarBlank, Clock, UsersThree } from "@phosphor-icons/react/dist/ssr";
+import { AddButton } from "@/components/ui/add-button";
+import { AppHeader } from "@/components/ui/app-header";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
+import { SectionTitle } from "@/components/ui/section-title";
+import { StatCard } from "@/components/ui/stat-card";
 import { getCurrentWorkspace } from "@/lib/auth/current-workspace";
 import { getSessionUser } from "@/lib/auth/session";
 import { formatLocalDate, formatLocalTime } from "@/lib/domain/time";
@@ -62,191 +68,160 @@ export default async function WorkspaceHomePage() {
     statusCounts,
     totalAppointments,
     revenueMinorUnits,
-    hasActiveCustomers,
     followUps,
     localDate,
   } = overview;
-  const allStatuses = ["Scheduled", "Confirmed", "Completed", "Cancelled", "NoShow"];
+  const allStatuses = ["Scheduled", "Confirmed", "Completed", "Cancelled", "NoShow"] as const;
 
   return (
-    <div className="page-reveal">
-      <div className="flex flex-col justify-between gap-5 border-b border-line pb-7 sm:flex-row sm:items-end">
-        <div>
-          <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-forest">
-            <PresenceDot /> {translate(locale, "Your studio, today")}
-          </p>
-          <h1 className="mt-3 text-3xl font-medium leading-tight tracking-[-0.065em] text-ink sm:text-[2.75rem]">
-            {translate(locale, "A good morning")}{user.displayName ? `, ${user.displayName.split(" ")[0]}` : ""}.
-          </h1>
-          <p className="mt-2 text-sm text-muted">{localDate}</p>
+    <div className="-mx-4 -mt-7 -mb-10 min-h-dvh p-1.5 sm:-mx-7 sm:-mt-9 lg:-mx-10">
+      <div className="page-reveal mx-auto flex min-h-[calc(100dvh-12px)] w-full flex-col rounded-[32px] bg-canvas px-5 pb-28 pt-5 text-ink">
+        <AppHeader
+          title={workspace.name}
+          subtitle={translate(locale, "Your studio")}
+          notifications={followUps.length > 0}
+        />
+
+        <div className="mt-6 flex items-end justify-between gap-3">
+          <PageHeader title={translate(locale, "Dashboard")} subtitle={localDate} />
+          <AddButton
+            href="/workspace/appointments?new=1"
+            aria-label={translate(locale, "Add an appointment")}
+            className="!size-14 !min-h-14 !min-w-14 [&_svg]:!size-6"
+          />
         </div>
-        <p className="max-w-[300px] text-sm leading-6 text-muted">
+        <p className="mt-2 text-[14px] leading-[1.5] text-muted">
           {translate(locale, "A clear view of what's ahead, with a little space to breathe between.")}
         </p>
-      </div>
 
-      <section aria-label={translate(locale, "Today's overview")} className="grid grid-cols-2 divide-x divide-y divide-line border-b border-line sm:grid-cols-4 sm:divide-y-0">
-        <div className="py-5 pr-4 sm:py-7">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">{translate(locale, "Appointments")}</p>
-          <p className="mt-3 font-mono text-3xl tracking-[-0.07em] text-ink">{formatNumber(totalAppointments, locale)}</p>
-          <p className="mt-1 text-[11px] text-muted">{translate(locale, "on the calendar today")}</p>
-        </div>
-        <div className="py-5 pl-4 pr-4 sm:px-6 sm:py-7">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">{translate(locale, "Confirmed")}</p>
-          <p className="mt-3 font-mono text-3xl tracking-[-0.07em] text-ink">{formatNumber(statusCounts.Confirmed ?? 0, locale)}</p>
-          <p className="mt-1 text-[11px] text-muted">{translate(locale, "ready to welcome")}</p>
-        </div>
-        <div className="py-5 pr-4 sm:px-6 sm:py-7">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">{translate(locale, "Revenue")}</p>
-          <p className="mt-3 font-mono text-2xl tracking-[-0.07em] text-ink">{formatCurrency(revenueMinorUnits / 100, workspace.currency, locale)}</p>
-          <p className="mt-1 text-[11px] text-muted">{formatNumber(statusCounts.Completed, locale)} {translate(locale, "completed today")}</p>
-        </div>
-        <div className="py-5 pl-4 sm:py-7 sm:pl-6">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">{translate(locale, "People")}</p>
-          <p className="mt-3 font-mono text-3xl tracking-[-0.07em] text-ink">{hasActiveCustomers ? translate(locale, "Here") : "—"}</p>
-          <p className="mt-1 text-[11px] text-muted">
-            {translate(locale, hasActiveCustomers ? "in your studio's care" : "ready to meet your first")}
-          </p>
-        </div>
-      </section>
+        <section
+          aria-label={translate(locale, "Today's overview")}
+          className="mt-6 grid grid-cols-2 gap-2"
+        >
+          <StatCard
+            label={translate(locale, "Appointments")}
+            value={formatNumber(totalAppointments, locale)}
+            caption={translate(locale, "on the calendar today")}
+            tone="brand"
+            className="min-h-[160px] p-5 [&>p:nth-of-type(1)]:text-[48px]"
+          />
+          <StatCard
+            label={translate(locale, "Confirmed")}
+            value={formatNumber(statusCounts.Confirmed, locale)}
+            caption={translate(locale, "ready to welcome")}
+            tone="leaf"
+            className="min-h-[160px] p-5 [&>p:nth-of-type(1)]:text-[48px]"
+          />
+          <StatCard
+            label={translate(locale, "Revenue")}
+            value={formatCurrency(revenueMinorUnits / 100, workspace.currency, locale)}
+            caption={`${formatNumber(statusCounts.Completed, locale)} ${translate(locale, "completed today")}`}
+            tone="sun"
+            className="min-h-[160px] p-5 [&>p:nth-of-type(1)]:text-[32px]"
+          />
+          <StatCard
+            label={translate(locale, "Studio")}
+            value={translate(locale, "Manage your studio")}
+            caption={translate(locale, "Studio, services, and team")}
+            tone="ink"
+            href="/workspace/settings"
+            icon={<ArrowRight aria-hidden="true" size={16} />}
+            className="min-h-[160px] p-5"
+          />
+        </section>
 
-      <section aria-label={translate(locale, "Appointment counts by status")} className="grid grid-cols-2 gap-x-5 border-b border-line py-4 sm:grid-cols-5">
-        {allStatuses.map((status) => (
-          <div className="flex items-center justify-between gap-3 py-1" key={status}>
-            <span className="text-[10px] text-muted">{translate(locale, status)}</span>
-            <span className="font-mono text-xs text-ink">{formatNumber(statusCounts[status as keyof typeof statusCounts], locale)}</span>
-          </div>
-        ))}
-      </section>
+        <section
+          aria-label={translate(locale, "Appointment counts by status")}
+          className="mt-4 flex flex-wrap gap-2"
+        >
+          {allStatuses.map((status) => (
+            <Badge
+              key={status}
+              variant="secondary"
+              className="min-h-10 bg-surface px-3.5 py-2 text-sm text-ink"
+            >
+              {translate(locale, status)} {formatNumber(statusCounts[status], locale)}
+            </Badge>
+          ))}
+        </section>
 
-      <div className="grid grid-cols-1 gap-10 pt-8 lg:grid-cols-[1.35fr_0.65fr] lg:gap-14 lg:pt-10">
-        <section aria-labelledby="today-title">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.17em] text-accent">{translate(locale, "The flow of today")}</p>
-              <h2 className="mt-2 text-xl font-medium tracking-[-0.05em] text-ink" id="today-title">
-                {translate(locale, "Today's appointments")}
-              </h2>
-            </div>
-            <Link className="inline-flex items-center gap-1.5 text-xs font-medium text-forest transition-colors hover:text-accent" href="/workspace/appointments">
-              {translate(locale, "Open calendar")} <ArrowRight size={14} />
+        <section aria-label={translate(locale, "Today's appointments")} className="mt-8">
+          <div className="flex items-end justify-between gap-3">
+            <SectionTitle title={translate(locale, "Today's appointments")} />
+            <Link
+              className="inline-flex min-h-11 shrink-0 items-center gap-1.5 text-[13px] text-ink focus-visible:outline-2 focus-visible:outline-brand"
+              href="/workspace/appointments"
+            >
+              {translate(locale, "Open calendar")} <ArrowRight aria-hidden="true" size={14} />
             </Link>
           </div>
 
           {todayAppointments.length > 0 ? (
-            <div className="cascade mt-6 divide-y divide-line border-y border-line">
-              {todayAppointments.map((appointment, index) => (
-                <article
-                  className="grid grid-cols-[58px_1fr_auto] items-center gap-3 py-4 sm:grid-cols-[76px_1fr_auto] sm:gap-5"
-                  key={appointment.id}
-                  style={{ "--index": index } as React.CSSProperties}
-                >
-                  <time className="font-mono text-xs text-muted" dateTime={appointment.startAt.toISOString()}>
+            <div className="mt-3 flex flex-col gap-2">
+              {todayAppointments.map((appointment) => (
+                <Card key={appointment.id} className="flex min-w-0 items-center gap-3 p-3">
+                  <time className="w-12 shrink-0 font-mono text-[13px] text-muted" dateTime={appointment.startAt.toISOString()}>
                     {formatLocalTime(appointment.startAt, workspace.timeZone, locale)}
                   </time>
-                  <div className="min-w-0">
-                    <h3 className="truncate text-sm font-medium text-ink">{appointment.customer}</h3>
-                    <p className="mt-1 truncate text-xs text-muted">
-                      {appointment.service} <span className="px-1 text-line">·</span> {appointment.professional}
-                    </p>
-                  </div>
-                  <span className="rounded-full bg-forest-soft px-2.5 py-1 text-[10px] font-medium text-forest">
-                    {translate(locale, appointment.status)}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm">{appointment.customer}</span>
+                    <span className="block truncate text-caption text-muted">{appointment.service} · {appointment.professional}</span>
                   </span>
-                </article>
+                  <Badge variant="secondary">{translate(locale, appointment.status)}</Badge>
+                </Card>
               ))}
             </div>
           ) : (
-            <div className="mt-6 border-y border-line py-10">
-              <span className="grid size-10 place-items-center rounded-xl bg-forest-soft text-forest">
+            <Card className="mt-3 p-4">
+              <span className="grid size-10 place-items-center rounded-full bg-brand-soft text-brand-deep" aria-hidden="true">
                 <CalendarBlank size={19} />
               </span>
-              <h3 className="mt-4 text-sm font-medium text-ink">{translate(locale, "Your day is open.")}</h3>
-              <p className="mt-1 max-w-[360px] text-xs leading-5 text-muted">
+              <h3 className="mt-3 text-base">{translate(locale, "Your day is open.")}</h3>
+              <p className="mt-1 text-[13px] leading-5 text-muted">
                 {translate(locale, "When you add an appointment, it will find its place here. Take this moment for yourself.")}
               </p>
               <Link
-                className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-full border border-line bg-white px-4 text-xs font-medium text-forest transition-colors hover:border-forest/30 active:scale-[0.98]"
+                className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-full bg-ink px-4 text-[13px] text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                 href="/workspace/appointments?new=1"
               >
-                {translate(locale, "Add an appointment")} <ArrowRight size={14} />
+                {translate(locale, "Add an appointment")} <ArrowRight aria-hidden="true" size={14} />
               </Link>
-            </div>
+            </Card>
           )}
         </section>
 
-        <aside aria-labelledby="notes-title" className="border-t border-line pt-6 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.17em] text-accent">{translate(locale, "A small reminder")}</p>
-          <h2 className="mt-2 text-xl font-medium tracking-[-0.05em] text-ink" id="notes-title">
-            {translate(locale, "Care is in the details.")}
-          </h2>
-          <p className="mt-3 text-sm leading-6 text-muted">
-            {translate(locale, "A well-kept customer note or a thoughtful follow-up can turn a visit into a familiar ritual.")}
-          </p>
-
-          <div className="mt-7 border-y border-line">
-            <Link
-              className="group flex items-center gap-4 py-4"
-              href="/workspace/customers"
-            >
-              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-accent-soft text-accent">
-                <UsersThree size={18} />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-xs font-medium text-ink">{translate(locale, "Your customers")}</span>
-                <span className="mt-1 block text-[11px] text-muted">{translate(locale, "Keep the little things close")}</span>
-              </span>
-              <ArrowRight className="text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-forest" size={15} />
-            </Link>
-            <Link
-              className="group flex items-center gap-4 border-t border-line py-4"
-              href="/workspace/settings"
-            >
-              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-forest-soft text-forest">
-                <UserPlus size={18} />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-xs font-medium text-ink">{translate(locale, "Make it your own")}</span>
-                <span className="mt-1 block text-[11px] text-muted">{translate(locale, "Set up services and your team")}</span>
-              </span>
-              <ArrowRight className="text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-forest" size={15} />
+        <section aria-label={translate(locale, "Ready to reconnect")} className="mt-8">
+          <div className="flex items-end justify-between gap-3">
+            <SectionTitle title={translate(locale, "Ready to reconnect")} />
+            <Link className="inline-flex min-h-11 items-center text-[13px] text-ink focus-visible:outline-2 focus-visible:outline-brand" href="/workspace/follow-up">
+              {translate(locale, "View all")}
             </Link>
           </div>
-
-          <div className="mt-7">
-            <div className="flex items-end justify-between gap-3">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.17em] text-accent">{translate(locale, "Thoughtful follow-up")}</p>
-                  <h3 className="mt-2 text-sm font-medium text-ink">{translate(locale, "Ready to reconnect")}</h3>
-              </div>
-              <Link className="text-[11px] font-medium text-forest hover:underline" href="/workspace/follow-up">{translate(locale, "View all")}</Link>
+          {followUps.length > 0 ? (
+            <div className="mt-3 flex flex-col gap-2">
+              {followUps.slice(0, 4).map((customer) => (
+                <Link key={customer.id} className="block rounded-card bg-surface p-3 focus-visible:outline-2 focus-visible:outline-brand" href={`/workspace/customers/${customer.id}`}>
+                  <span className="block truncate text-sm">{customer.name}</span>
+                  <span className="mt-1 block text-caption text-muted">
+                    {translate(locale, "Last visit")} {formatLocalDate(customer.lastVisitAt, workspace.timeZone, locale)}
+                  </span>
+                </Link>
+              ))}
             </div>
-            {followUps.length ? (
-              <ul className="mt-3 divide-y divide-line border-y border-line">
-                {followUps.slice(0, 4).map((customer) => (
-                  <li className="py-3" key={customer.id}>
-                    <Link className="block truncate text-xs font-medium text-ink hover:text-forest" href={`/workspace/customers/${customer.id}`}>
-                      {customer.name}
-                    </Link>
-                    <p className="mt-1 text-[10px] text-muted">
-                      {translate(locale, "Last visit")} {formatLocalDate(customer.lastVisitAt, workspace.timeZone, locale)}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="mt-3 text-xs leading-5 text-muted">
-                {translate(locale, "Customers with a past visit and current marketing permission will appear here when it is time to check in.")}
-              </p>
-            )}
-          </div>
-
-          <p className="mt-6 text-[10px] leading-5 text-muted">
+          ) : (
+            <Card className="mt-3 p-4 text-[13px] leading-5 text-muted">
+              {translate(locale, "Customers with a past visit and current marketing permission will appear here when it is time to check in.")}
+            </Card>
+          )}
+          <p className="mt-4 text-caption text-muted">
             {translate(locale, "Showing appointments in")} {workspace.timeZone}. {translate(locale, "All information belongs to")} {workspace.name}.
           </p>
-        </aside>
+        </section>
+
+        <p className="sr-only">
+          {allStatuses.map((status) => `${translate(locale, status)}: ${formatNumber(statusCounts[status], locale)}`).join(", ")}
+        </p>
       </div>
-      <p className="sr-only">{allStatuses.map((status) => `${translate(locale, status)}: ${formatNumber(statusCounts[status as keyof typeof statusCounts], locale)}`).join(", ")}</p>
     </div>
   );
 }

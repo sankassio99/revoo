@@ -1,5 +1,9 @@
 import Link from "next/link";
-import { CalendarBlank, CaretLeft, CaretRight } from "@phosphor-icons/react/dist/ssr";
+import { CaretLeft, CaretRight } from "@phosphor-icons/react/dist/ssr";
+import { AddButton } from "@/components/ui/add-button";
+import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
+import { AppointmentWeekStrip } from "@/features/appointments/appointment-week-strip";
 import { AppointmentCalendar, type CalendarAppointment } from "@/features/appointments/appointment-calendar";
 import { AppointmentForm } from "@/features/appointments/appointment-form";
 import { listAppointments } from "@/features/appointments/appointment.service";
@@ -11,7 +15,6 @@ import { getSessionUser } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/messages";
-import { formatNumber } from "@/lib/i18n/format";
 
 export const dynamic = "force-dynamic";
 
@@ -97,28 +100,35 @@ export default async function AppointmentsPage({ searchParams }: PageProps) {
 
   return (
     <div className="page-reveal">
-      <div className="flex flex-col justify-between gap-5 border-b border-line pb-7 sm:flex-row sm:items-end">
-        <div>
-          <p className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">
-            <CalendarBlank size={14} /> {translate(locale, "Find a little rhythm")}
-          </p>
-          <h1 className="mt-3 text-3xl font-medium tracking-[-0.065em] text-ink sm:text-[2.75rem]">{translate(locale, "Appointments")}</h1>
-          <p className="mt-2 text-sm text-muted">{rangeTitle} <span className="px-1 text-line">·</span> {workspace.timeZone}</p>
-        </div>
+      <PageHeader
+        action={
+          <AddButton
+            aria-label={translate(locale, "Add an appointment")}
+            className="!size-14 !min-h-14 !min-w-14 [&_svg]:!size-6"
+            href={`/workspace/appointments?date=${date}&view=${view}&new=1`}
+          />
+        }
+        subtitle={`${rangeTitle} · ${workspace.timeZone}`}
+        title={translate(locale, view === "day" ? "Daily schedule" : "Weekly schedule")}
+      />
+
+      <div className="mt-6">
+        <AppointmentWeekStrip date={date} view={view} />
+      </div>
+
+      <div className="mt-4 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Link aria-label={translate(locale, "Previous period")} className="grid size-10 place-items-center rounded-full border border-line bg-white text-muted hover:text-forest" href={dateHref(previousDate)}>
+          <Button aria-label={translate(locale, "Previous period")} href={dateHref(previousDate)} size="icon-sm" variant="outline">
             <CaretLeft size={16} />
-          </Link>
-          <Link className="min-h-10 rounded-full border border-line bg-white px-4 py-3 text-xs font-medium text-ink hover:border-forest/40" href={dateHref(today)}>
-            {translate(locale, "Today")}
-          </Link>
-          <Link aria-label={translate(locale, "Next period")} className="grid size-10 place-items-center rounded-full border border-line bg-white text-muted hover:text-forest" href={dateHref(nextDate)}>
+          </Button>
+          <Button href={dateHref(today)} size="sm" variant="outline">{translate(locale, "Today")}</Button>
+          <Button aria-label={translate(locale, "Next period")} href={dateHref(nextDate)} size="icon-sm" variant="outline">
             <CaretRight size={16} />
-          </Link>
-          <Link className="ml-2 text-xs font-medium text-muted hover:text-forest" href={dateHref(date, view === "day" ? "week" : "day")}>
-            {translate(locale, view === "day" ? "Week" : "Day")} {translate(locale, "view")}
-          </Link>
+          </Button>
         </div>
+        <Button href={dateHref(date, view === "day" ? "week" : "day")} size="sm" variant="ghost">
+          {translate(locale, view === "day" ? "Week" : "Day")} {translate(locale, "view")}
+        </Button>
       </div>
 
       <AppointmentForm
@@ -132,15 +142,7 @@ export default async function AppointmentsPage({ searchParams }: PageProps) {
         tenantId={workspace.tenantId}
       />
 
-      <section aria-label={`${translate(locale, view)} ${translate(locale, "appointment calendar")}`} className="pt-7">
-        <div className="mb-4 flex items-end justify-between gap-3">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.17em] text-accent">{translate(locale, view === "day" ? "One day at a time" : "The week ahead")}</p>
-            <h2 className="mt-2 text-xl font-medium tracking-[-0.05em] text-ink">{translate(locale, view === "day" ? "Daily schedule" : "Weekly schedule")}</h2>
-          </div>
-          <span className="text-xs text-muted">{formatNumber(calendarItems.length, locale)} {translate(locale, "appointments")}</span>
-        </div>
-        <AppointmentCalendar appointments={calendarItems} currency={workspace.currency} tenantId={workspace.tenantId} view={view} />
+      <section aria-label={`${translate(locale, view)} ${translate(locale, "appointment calendar")}`}       className="pt-6">        <AppointmentCalendar appointments={calendarItems} currency={workspace.currency} tenantId={workspace.tenantId} view={view} />
       </section>
     </div>
   );
