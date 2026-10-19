@@ -70,7 +70,7 @@ export async function AppFrame({
         </SidebarHeader>
 
         <SidebarContent>
-          <SidebarNav />
+          <SidebarNav tenantId={activeTenantId} />
         </SidebarContent>
 
         <SidebarFooter className="border-t border-white/12 px-4 pb-4 pt-3">
