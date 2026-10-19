@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ClientIdentification } from "@/features/public-booking/client-identification";
 import { BookingConfirmation, type PublicBookingConfirmation } from "@/features/public-booking/booking-confirmation";
+import type { PublicBookingOptions } from "@/features/public-booking/public-booking.types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { translate } from "@/lib/i18n/messages";
 import { useLanguage } from "@/features/i18n/language-provider";
@@ -10,9 +11,6 @@ import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMe
 import { ChevronDownIcon } from "lucide-react";
 import { formatDate, formatNumber } from "@/lib/i18n/format";
 
-type Service = { id: string; name: string; durationMinutes: number; priceMinorUnits: number };
-type Professional = { id: string; name: string; serviceIds: string[] };
-type Options = { workspace: { name: string; timeZone: string }; services: Service[]; professionals: Professional[] };
 type Selection = { professionalId: string; serviceIds: string[]; date: string; time: string };
 type Client = { id: string; name: string; email: string };
 const selectionKey = "revoo-public-booking-selection";
@@ -23,7 +21,7 @@ function localToday(timeZone: string) {
   return `${values.year}-${values.month}-${values.day}`;
 }
 
-export function BookingSelection({ tenantId, options }: { tenantId: string; options: Options }) {
+export function BookingSelection({ tenantId, options }: { tenantId: string; options: PublicBookingOptions }) {
   const { locale } = useLanguage();
   const t = (text: string) => translate(locale, text);
   const today = useMemo(() => localToday(options.workspace.timeZone), [options.workspace.timeZone]);

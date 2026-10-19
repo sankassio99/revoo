@@ -10,15 +10,16 @@ type ActionBarOptions = {
   locale: "pt" | "en";
   onLocaleChange: (locale: "pt" | "en") => void;
   static?: boolean;
+  wide?: boolean;
   className?: string;
 };
 
 export type ActionBarProps = ActionBarOptions & ({ href: string; onCta?: never } | { href?: never; onCta: () => void });
 
-function ActionBar({ ctaLabel, onCta, href, locale, onLocaleChange, static: isStatic = false, className }: ActionBarProps) {
+function ActionBar({ ctaLabel, onCta, href, locale, onLocaleChange, static: isStatic = false, wide = false, className }: ActionBarProps) {
   return (
     <div className={cn(isStatic ? "relative px-4 pb-4" : "fixed inset-x-0 bottom-0 z-40 px-4 pb-[max(16px,env(safe-area-inset-bottom))]", className)}>
-      <div className="mx-auto flex w-full max-w-md items-center gap-2 rounded-full bg-surface p-2">
+      <div className={cn("mx-auto flex w-full items-center gap-2 rounded-full bg-surface p-2", wide ? "max-w-[760px]" : "max-w-md")}>
         <Button
           href={href}
           onClick={onCta}
