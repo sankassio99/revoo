@@ -5,7 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MoreHorizontalIcon } from "lucide-react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { solidTone } from "@/components/ui/tones";
+import { cn } from "cn";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,15 +53,24 @@ export type CalendarAppointment = {
 type UpdatePayload = Record<string, unknown>;
 
 const ALL_PROFESSIONALS = "__all__";
+const SERVICE_TONES = ["leaf", "brand", "sun"] as const;
+
+function toneFor(serviceName: string) {
+  let hash = 0;
+  for (const char of serviceName) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  return SERVICE_TONES[hash % SERVICE_TONES.length]!;
+}
 
 function AppointmentActions({
   appointment,
   currency,
+  dark,
   disabled,
   onUpdate,
 }: {
   appointment: CalendarAppointment;
   currency: string;
+  dark: boolean;
   disabled: boolean;
   onUpdate: (appointmentId: string, payload: UpdatePayload) => Promise<boolean>;
 }) {
@@ -87,20 +100,20 @@ function AppointmentActions({
   }
 
   return (
-    <div className="flex items-center gap-2 sm:justify-end">
+    <div className="flex items-center gap-2">
       {status === "Scheduled" && (
         <Button
           disabled={disabled}
           onClick={() => void onUpdate(appointment.id, { action: "status", status: "Confirmed" })}
           size="sm"
-          variant="outline"
+          variant={dark ? "secondary" : "default"}
         >
           {t("Confirm")}
         </Button>
       )}
       {status === "Confirmed" && (
         <Popover onOpenChange={setCompleteOpen} open={completeOpen}>
-          <PopoverTrigger render={<Button disabled={disabled} size="sm" />}>{t("Complete")}</PopoverTrigger>
+          <PopoverTrigger render={<Button disabled={disabled} size="sm" variant={dark ? "secondary" : "default"} />}>{t("Complete")}</PopoverTrigger>
           <PopoverContent align="end" className="w-60">
             <form className="grid gap-3" onSubmit={complete}>
               <div className="grid gap-1.5">
@@ -123,7 +136,7 @@ function AppointmentActions({
       )}
       <DropdownMenu>
         <DropdownMenuTrigger
-          render={<Button aria-label={t("More actions")} disabled={disabled} size="icon-sm" variant="ghost" />}
+          render={<Button aria-label={t("More actions")} disabled={disabled} size="icon-sm" variant="secondary" />}
         >
           <MoreHorizontalIcon />
         </DropdownMenuTrigger>
@@ -230,10 +243,9 @@ export function AppointmentCalendar({
   return (
     <div>
       {professionals.length > 1 && (
-        <div className="mb-4 flex items-center gap-2">
-          <Label htmlFor="professional-filter">{translate(locale, "Professional")}</Label>
+        <div className="mb-5 flex items-center justify-between gap-3">
           <Select onValueChange={(value) => setProfessional(value ?? ALL_PROFESSIONALS)} value={professional}>
-            <SelectTrigger className="w-52" id="professional-filter">
+            <SelectTrigger aria-label={translate(locale, "Professional")} className="h-11 w-auto min-w-52 rounded-full border-0 bg-surface px-5" id="professional-filter">
               <SelectValue>
                 {professional === ALL_PROFESSIONALS ? translate(locale, "All professionals") : professional}
               </SelectValue>
@@ -245,52 +257,59 @@ export function AppointmentCalendar({
               ))}
             </SelectContent>
           </Select>
+          <span className="text-[14px] text-muted">
+            {visibleAppointments.length} {translate(locale, "appointments")}
+          </span>
         </div>
       )}
       {[...groups.entries()].map(([date, items]) => (
         <section aria-label={date || translate(locale, "Daily appointments")} className="mb-8 last:mb-0" key={date || "day"}>
           {date && (
-            <h3 className="border-y border-line py-3 text-xs font-semibold text-ink">
+            <h3 className="mb-3 text-[14px] font-medium text-ink">
               {items[0]?.localDate}
             </h3>
           )}
-          <div className="divide-y divide-line border-b border-line">
-            {items.map((appointment) => (
-              <article className="grid gap-3 py-4 sm:grid-cols-[78px_1fr_auto] sm:items-center sm:gap-5" key={appointment.id}>
-                <time className="font-mono text-xs text-muted" dateTime={appointment.startAt}>
-                  {appointment.localTime}
-                </time>
-                <div className="min-w-0">
-                  <h3 className="truncate text-sm font-medium text-ink">
-                    <Link className="hover:text-forest hover:underline" href={`/workspace/customers/${appointment.customerId}`}>
-                      {appointment.customerName}
-                    </Link>
-                  </h3>
-                  {(appointment.customerEmail || appointment.customerPhone) && (
-                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
-                      {appointment.customerEmail && (
-                        <span>{translate(locale, "Email")}: <a className="hover:text-forest hover:underline" href={`mailto:${appointment.customerEmail}`}>{appointment.customerEmail}</a></span>
-                      )}
-                      {appointment.customerPhone && (
-                        <span>{translate(locale, "Phone")}: <a className="hover:text-forest hover:underline" href={`tel:${appointment.customerPhone}`}>{appointment.customerPhone}</a></span>
-                      )}
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {items.map((appointment) => {
+              const tone = solidTone[toneFor(appointment.serviceName)];
+              const dark = tone === solidTone.brand || tone === solidTone.ink;
+              return (
+                <div className="min-w-0" key={appointment.id}>
+                  <time className="mb-2 block font-mono text-[14px] leading-[1.5] text-muted" dateTime={appointment.startAt}>
+                    {appointment.localTime}
+                  </time>
+                  <Card className={cn("gap-0 rounded-card border-0 p-4 shadow-none ring-0", tone.bg, tone.fg)}>
+                    <div className="flex min-w-0 items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="truncate text-heading">
+                          <Link className="hover:underline" href={`/workspace/customers/${appointment.customerId}`}>
+                            {appointment.customerName}
+                          </Link>
+                        </h3>
+                        <p className={cn("mt-1 truncate text-[13px]", tone.sub)}>
+                          {appointment.serviceName} · {appointment.professionalName}
+                        </p>
+                        {appointment.customerPhone && (
+                          <a className={cn("mt-0.5 block text-[13px] hover:underline", tone.sub)} href={`tel:${appointment.customerPhone}`}>
+                            {appointment.customerPhone}
+                          </a>
+                        )}
+                      </div>
+                      <Badge className="bg-white text-ink">{translate(locale, appointment.status)}</Badge>
                     </div>
-                  )}
-                  <p className="mt-1 truncate text-xs text-muted">
-                    {appointment.serviceName} <span className="px-1 text-line">·</span> {appointment.professionalName}
-                  </p>
-                  <span className="mt-2 inline-flex rounded-full bg-forest-soft px-2.5 py-1 text-[10px] font-medium text-forest">
-                    {translate(locale, appointment.status)}
-                  </span>
+                    <div className="mt-3.5">
+                      <AppointmentActions
+                        appointment={appointment}
+                        currency={currency}
+                        dark={dark}
+                        disabled={busy}
+                        onUpdate={update}
+                      />
+                    </div>
+                  </Card>
                 </div>
-                <AppointmentActions
-                  appointment={appointment}
-                  currency={currency}
-                  disabled={busy}
-                  onUpdate={update}
-                />
-              </article>
-            ))}
+              );
+            })}
           </div>
         </section>
       ))}
